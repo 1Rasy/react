@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>门店导入</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <style>
+    :root { --primary:#4A154B; --bg-main:#f4f2f5; --text-main:#1f1121; --card-bg:#ffffff; --border-color:#e7e1e8; --ok:#2e7d32; --danger:#dc2626; }
+    body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; margin:0; padding:16px; background:var(--bg-main); color:var(--text-main); }
+    .container { max-width:553px; margin:0 auto; }
+    .back { display:inline-block; margin:0 0 12px; border:1px solid var(--border-color); background:#fff; color:var(--text-main); border-radius:9px; padding:9px 12px; font-size:14px; font-weight:700; text-decoration:none; }
+    .page-title { margin:0 0 8px; color:var(--primary); font-size:26px; }
+    .card { background:var(--card-bg); padding:16px; border:0; border-radius:14px; box-shadow:0 4px 14px rgba(74,21,75,.06); }
+    h2 { display:none; }
+    .upload-box { border:1px dashed var(--border-color); background:#fff; padding:45px 20px; border-radius:12px; cursor:pointer; text-align:center; transition:all .15s ease-in-out; position:relative; }
+    .upload-box.dragover { border-color:var(--primary)!important; background:#fbf9fc!important; }
+    .upload-box:hover { border-color: var(--primary); background:#fbf9fc; }
+    .file-input { position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+    .btn-submit { margin-top:14px; width:100%; background:var(--primary); color:#fff; border:1px solid var(--primary); padding:13px; border-radius:9px; font-size:15px; font-weight:700; transition:background .15s; }
+    .btn-submit:hover { background:#360f37; }
+    .btn-submit:disabled { background:#ced4da; border-color:#ced4da; }
+    .status { margin-top:15px; font-size:13px; font-weight:700; color:var(--primary); text-align:center; min-height:20px; white-space:pre-line; line-height:1.6; }
+    .error { color:var(--danger); }
+    @media(max-width:700px){ body{padding:12px} .page-title{font-size:23px} .card{max-width:none} }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <a class="back" href="dashboard.html">← 返回管理后台</a>
+  <h1 class="page-title">门店导入</h1>
+  <div class="card">
+    <h2>门店导入</h2>
+
+    <div class="upload-box" id="dropZone">
+      <div style="font-size:13px;color:#6c757d;">点击选择文件，或将门店 Excel 文件拖拽至此处</div>
+      <input type="file" id="excelFile" class="file-input" accept=".xlsx, .xls">
+    </div>
+
+    <div id="status" class="status">系统初始化中...</div>
+    <button id="submitBtn" class="btn-submit" disabled onclick="executeFrontendWash()">确认导入数据</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  const SUPABASE_URL = "https://wyjbnnqhiehjccmojbbg.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_WwTC7079N2e8ZQwPKUj-Gw_ewFiviFG";
+  const client = (SUPABASE_URL && SUPABASE_KEY) ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('excelFile');
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.textContent = '导入';
+  const statusDiv = document.getElementById('status');
+
+  let rawExcelRows = null;
+  let employeeWhitelist = new Set();
+
+  async function initWhitelist() {
+    if (!client) {
+      statusDiv.innerText = "错误：Supabase 配置缺失";
+      return;
+    }
+    try {
+      const { data, error } = await client.from('employees').select('employee_code');
+
+      if (error) {
+        statusDiv.innerText = `数据库错误 [${error.code}]: ${error.message}`;
+        console.error(error);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        statusDiv.innerText = "警告：employees 表中未检测到任何员工工号";
+        return;
+      }
+
+      data.forEach(emp => {
+        if (emp.employee_code) employeeWhitelist.add(String(emp.employee_code).trim());
+      });
+
+      statusDiv.innerText = `已加载 ${employeeWhitelist.size} 位员工。`;
+    } catch (err) {
+      console.error(err);
+      statusDiv.innerText = `网络或系统异常: ${err.message || err}`;
+    }
+  }
+  window.onload = initWhitelist;
+
+  ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(n => dropZone.addEventListener(n, e => e.preventDefault(), false));
+  dropZone.addEventListener('dragover', () => dropZone.classList.add('dragover'));
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+  dropZone.addEventListener('drop', e => {
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) processExcelFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', e => {
+    if (e.target.files.length > 0) processExcelFile(e.target.files[0]);
+  });
+
+  function processExcelFile(file) {
+    if (employeeWhitelist.size === 0) {
+      alert("基础白名单为空，中止操作");
+      return;
+    }
+    statusDiv.innerText = "正在解析 Excel 文件...";
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      rawExcelRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+
+      statusDiv.innerText = `文件解析成功，共计 ${rawExcelRows.length} 行数据，等待执行导入。`;
+      submitBtn.disabled = false;
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  async function executeFrontendWash() {
+    if (!rawExcelRows || !client) return;
+    submitBtn.disabled = true;
+    statusDiv.innerText = "正在解析门店数据...";
+
+    let safePayloads = [];
+    let seenStoreCodes = new Set();
+
+    rawExcelRows.forEach(row => {
+      let rawEmpCode = row['门店负责人员工号'];
+      let rawStoreCode = row['ATOM门店编号'];
+      let rawStoreName = row['门店名称'];
+
+      if (rawEmpCode && rawStoreCode && rawStoreName) {
+        let cleanEmpCode = String(rawEmpCode).trim().replace(/[\"\']/g, "");
+        let cleanStoreCode = String(rawStoreCode).trim().replace(/[\"\']/g, "");
+
+        if (employeeWhitelist.has(cleanEmpCode) && !seenStoreCodes.has(cleanStoreCode)) {
+          seenStoreCodes.add(cleanStoreCode);
+          safePayloads.push({
+            employee_code: cleanEmpCode,
+            atom_code: cleanStoreCode,
+            store_name: String(rawStoreName).trim()
+          });
+        }
+      }
+    });
+
+    if (safePayloads.length === 0) {
+      statusDiv.innerText = "导入失败：本次文件没有可导入的门店。";
+      alert("未发现可导入的门店，请检查员工工号和门店信息。");
+      submitBtn.disabled = false;
+      return;
+    }
+
+    statusDiv.innerText = `正在导入 ${safePayloads.length} 条门店...`;
+
+    try {
+
+      await client.from('temp_upload_assets').delete().neq('employee_code', '_clear_all_');
+
+      const { error: insertTempError } = await client
+        .from('temp_upload_assets')
+        .insert(safePayloads);
+
+      if (insertTempError) throw insertTempError;
+
+      const { error: rpcError } = await client.rpc('sync_and_mask_assets');
+
+      if (rpcError) throw rpcError;
+
+      statusDiv.innerText = `导入成功：本次导入 ${safePayloads.length} 家门店。`;
+      alert("门店导入成功。");
+
+    } catch (err) {
+      console.error(err);
+      statusDiv.innerText = "异常：数据库同步操作失败";
+      alert(`导入失败: ${err.message}`);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>

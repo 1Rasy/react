@@ -1,0 +1,1 @@
+trigger redeploy after restoring store.html UI and removing product management entry from employee page

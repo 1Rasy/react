@@ -1,0 +1,92 @@
+<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8" /><title>系统入口 - 员工选择</title><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>:root {
+  --primary: #4A154B;        
+  --primary-hover: #360f37; 
+  --accent: #ffb81c;        
+  --bg-main: #f4f2f5;       
+  --text-main: #1f1121;     
+  --text-muted: #756676;    
+  --card-bg: #ffffff;       
+}body { 
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
+  margin:0; background: var(--bg-main); color: var(--text-main); padding-bottom: 90px; 
+  -webkit-tap-highlight-color: transparent;
+  animation: pageFadeIn 0.2s ease-in-out;
+}@keyframes pageFadeIn {
+  from { opacity: 0.6; } to { opacity: 1; }
+}.card { background: var(--card-bg); margin:12px; padding:16px; border-radius:12px; box-shadow: 0 4px 12px rgba(74,21,75,0.03); position: relative;}.search-wrapper { position: relative; margin: 4px 0 12px 0; width: 100%; box-sizing: border-box; }.search-wrapper input { width:100%; padding:12px 40px 12px 12px; margin:0; border: 1px solid #dcd6dd; border-radius: 8px; box-sizing:border-box; font-size:16px; background: #faf9fa; }.search-wrapper input:focus { outline: none; border-color: var(--primary); background: #fff; }.search-clear-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; background: #e2dde3; color: #756676; border-radius: 50%; text-align: center; line-height: 20px; font-size: 12px; cursor: pointer; font-weight: bold; display: none; z-index: 5; }.search-clear-btn:active { background: #d0c9d2; }.emp-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 4px 0; }.emp-card { background: #faf9fa; border: 1px solid #eeeade; border-left: 4px solid var(--primary); border-radius: 8px; padding: 14px 12px; cursor: pointer; transition: all 0.15s ease; box-sizing: border-box; }.emp-card:active { background: #f3e2f5; transform: scale(0.97); }.sub { font-size:13px; color: var(--text-muted); margin-top: 2px; }</style></head><body>
+
+<div class="card">
+  <div class="search-wrapper">
+    <input id="search" placeholder="🔍 输入姓名或工号搜索员工..." oninput="handleSearch()" />
+    <div id="clearSearch" class="search-clear-btn" onclick="clearSearchInput()">✕</div>
+  </div>
+  <div id="list"></div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://wyjbnnqhiehjccmojbbg.supabase.co";
+const SUPABASE_KEY = "sb_publishable_WwTC7079N2e8ZQwPKUj-Gw_ewFiviFG";
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let employees = [];
+
+async function init(){
+  try {
+    document.getElementById('list').innerHTML = '<div style="color:#756676;padding:10px;">正在加载员工列表...</div>';
+    const e = await client.from('employees').select('employee_code, name').eq('is_active', true);
+    
+    employees = (e.data || []).map(x => ({
+      employee_code: x.employee_code,
+      employee_name: x.name 
+    }));
+    
+    renderEmployees();
+  } catch (err) {
+    console.error(err);
+    document.getElementById('list').innerHTML = '<div style="color:red;padding:10px;">❌ 页面初始化失败，请刷新重试</div>';
+  }
+}
+
+function handleSearch(){
+  const val = document.getElementById('search').value;
+  const clearBtn = document.getElementById('clearSearch');
+  clearBtn.style.display = (val && val.length > 0) ? 'block' : 'none';
+  renderEmployees();
+}
+
+function clearSearchInput() {
+  document.getElementById('search').value = '';
+  document.getElementById('clearSearch').style.display = 'none';
+  renderEmployees();
+}
+
+function renderEmployees(){
+  const k = document.getElementById('search').value || '';
+  const list = employees.filter(e => (e.employee_name || '').includes(k) || (e.employee_code || '').includes(k));
+
+  if (list.length === 0) {
+    document.getElementById('list').innerHTML = `<div class="sub" style="text-align:center;padding:30px;">⚠️ 未找到匹配的员工</div>`;
+    return;
+  }
+
+  document.getElementById('list').innerHTML = `
+    <div class="emp-grid">
+      ${list.map(e => `
+        <div class='emp-card' onclick="goToStorePage('${e.employee_code}','${e.employee_name}')">
+          <strong style="font-size:16px; color:var(--primary); display:block; margin-bottom:4px;">${e.employee_name}</strong>
+          <div class='sub' style="font-size:12px;">${e.employee_code}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function goToStorePage(code, name) {
+  sessionStorage.setItem('current_employee_code', code);
+  sessionStorage.setItem('current_employee_name', name);
+  window.location.href = 'store.html';
+}
+
+init();
+</script>
+</body></html>

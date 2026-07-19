@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<title>开单</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<style>
+:root { --primary:#4A154B; --primary-hover:#360f37; --accent:#ffb81c; --bg-main:#f4f2f5; --text-main:#1f1121; --text-muted:#756676; --card-bg:#ffffff; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; margin:0; background:var(--bg-main); color:var(--text-main); padding-bottom:90px; -webkit-tap-highlight-color:transparent; }
+.card { background:var(--card-bg); margin:12px; padding:16px; border-radius:12px; box-shadow:0 4px 12px rgba(74,21,75,0.03); position:relative; }
+.top-action-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.back-btn { display:inline-flex; align-items:center; justify-content:center; background:#f4f2f5; color:var(--text-main); padding:10px 18px; border-radius:20px; font-size:14px; font-weight:600; cursor:pointer; border:1px solid #e2dde3; transition:all .2s; }
+.back-btn:active { background:#e2dde3; transform:scale(.97); }
+.back-btn::before { content:"←"; margin-right:6px; font-weight:bold; font-size:16px; }
+.big-store-title { font-size:22px; font-weight:800; color:#111827; margin:4px 0 14px 0; letter-spacing:-.5px; }
+.sub { font-size:13px; color:var(--text-muted); margin-top:2px; }
+.search-wrapper { position:relative; margin:4px 0 12px 0; width:100%; box-sizing:border-box; }
+.search-wrapper input { width:100%; padding:12px; margin:0; border:1px solid #dcd6dd; border-radius:8px; box-sizing:border-box; font-size:16px; background:#faf9fa; }
+.amount-summary-banner { background:#fdfdfd; border:1px solid #ebdfee; border-left:5px solid var(--primary); padding:10px 12px; border-radius:6px; margin:10px 0; font-size:14px; color:#2b1d2c; }
+.brand-nav { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 6px 0; }
+.brand-badge { background:#f4f2f5; color:var(--text-muted); padding:7px 14px; border-radius:20px; font-size:13px; cursor:pointer; font-weight:600; border:1px solid transparent; }
+.brand-badge.active { background:#fbf4fc; color:var(--primary); border:1px solid #eecbf5; }
+.spec-nav { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 12px 0; padding:6px 0; border-bottom:1px dashed #e2dde3; }
+.spec-badge { background:#fff; color:#665c67; padding:4px 10px; border-radius:6px; font-size:12px; cursor:pointer; border:1px solid #e2dde3; font-weight:500; }
+.spec-badge.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+.item { padding:14px 4px; border-bottom:1px solid #f4f2f5; box-sizing:border-box; width:100%; }
+.item-main-row { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-direction:column; }
+.prod-info { width:100%; min-width:0; }
+.prod-name { font-size:15px; font-weight:700; color:var(--primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.control-group { display:flex; align-items:center; gap:6px; width:100%; margin-top:8px; flex-wrap:wrap; }
+.picker-wrapper { display:inline-flex; align-items:center; gap:3px; font-size:13px; color:var(--text-muted); }
+.picker-wrapper span.label-txt { font-weight:500; color:#665c67; }
+.picker-wrapper span.unit-txt { font-weight:600; color:var(--text-main); font-size:13px; }
+.ios-picker { background:#f4f2f5; color:var(--text-main); border:1px solid #dcd6dd; border-radius:6px; padding:6px 6px; font-size:14px; font-weight:700; outline:none; cursor:pointer; -webkit-appearance:none; appearance:none; text-align:center; min-width:44px; }
+.float-submit { position:fixed; right:20px; bottom:24px; z-index:99; background:var(--primary); color:#fff; border:none; padding:14px 26px; border-radius:50px; font-size:16px; font-weight:700; box-shadow:0 8px 16px rgba(74,21,75,.3); }
+.hide { display:none!important; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="top-action-bar"><div class="back-btn" onclick="goBack()">返回</div></div>
+  <div id="list"></div>
+</div>
+<button class="float-submit" onclick="submitOrder()">🚀 提交账单</button>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://wyjbnnqhiehjccmojbbg.supabase.co";
+const SUPABASE_KEY="sb_publishable_WwTC7079N2e8ZQwPKUj-Gw_ewFiviFG";
+const client=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const currentEmployee={code:sessionStorage.getItem('current_employee_code'),name:sessionStorage.getItem('current_employee_name')};
+if(!currentEmployee.code){alert('当前无登录员工，请重新选择员工！');location.href='index.html';}
+const params=new URLSearchParams(location.search);
+const currentStore={atom:params.get('atom')||'',name:params.get('name')||''};
+let products=[],stockMap={},orderData={items:{}};let currentSelectedBrand=null,currentSelectedSpec='';
+const LOADING_TEXT='正在加载..';
+function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function productDisplayName(product,fallback=''){const label=[product?.spec,product?.flavor].map(v=>String(v??'').trim()).filter(Boolean).join(' ');return label||String(fallback||product?.barcode||product?.id||'').trim();}
+function isThreeLevelProduct(p){return Number(p?.pcs_per_box||0)>0;}
+function orderQtyTotal(p,it){if(!it)return 0;const cases=isThreeLevelProduct(p)?0:Number(it.cases||0);return cases*Number(p.pcs_per_case||0)+Number(it.boxes||0)*Number(p.pcs_per_box||0)+Number(it.pcs||0);}
+function makePureQtyOptionsHtml(max,current){let html='';for(let i=0;i<=max;i++)html+=`<option value="${i}" ${i===Number(current)?'selected':''}>${i}</option>`;return html;}
+function makePurePriceOptionsHtml(centerPrice,currentSelected){let html='';let start=Math.max(.05,Number(centerPrice||1)-15);let end=Number(centerPrice||1)+30;for(let p=start;p<=end;p+=.05){let val=+p.toFixed(2);html+=`<option value="${val}" ${Math.abs(val-Number(currentSelected||0))<.015?'selected':''}>${val.toFixed(2)}</option>`;}return html;}
+async function init(){document.getElementById('list').innerHTML=`<div style="color:#756676;padding:10px;">${LOADING_TEXT}</div>`;const [pRes,sRes]=await Promise.all([client.from('products').select('*').eq('is_active',true),client.from('van_stocks').select('product_barcode,qty').eq('employee_code',currentEmployee.code)]);if(pRes.error){alert('加载商品失败：'+pRes.error.message);return;}products=(pRes.data||[]).map(x=>{const spec=(x.spec||'常规').trim(),flavor=(x.flavor||'').trim();return{...x,id:x.barcode,spec,flavor,product_name:productDisplayName({spec,flavor,barcode:x.barcode},x.barcode),unit:(x.unit||'个').trim(),pcs_per_box:Number(x.pcs_per_box||0),pcs_per_case:Number(x.pcs_per_case||24),default_price:Number(x.default_price||0)}});(sRes.data||[]).forEach(st=>stockMap[st.product_barcode]=Number(st.qty||0));products.forEach(p=>{orderData.items[p.id]={cases:0,boxes:0,pcs:0,price:p.default_price||0};});const brands=[...new Set(products.map(p=>p.brand).filter(Boolean))];currentSelectedBrand=brands[0]||null;const specs=[...new Set(products.filter(p=>p.brand===currentSelectedBrand).map(p=>p.spec).filter(Boolean))];currentSelectedSpec=specs[0]||'';renderOrder();}
+function generateFilterHeaderHtml(){const brands=[...new Set(products.map(p=>p.brand).filter(Boolean))];const specs=[...new Set(products.filter(p=>p.brand===currentSelectedBrand).map(p=>p.spec).filter(Boolean))];return `<div class='brand-nav'>${brands.map(b=>`<div class="brand-badge ${b===currentSelectedBrand?'active':''}" onclick="selectBrand('${esc(b)}')">${esc(b)}</div>`).join('')}</div><div class='spec-nav'>${specs.map(sp=>`<div class="spec-badge ${sp===currentSelectedSpec?'active':''}" onclick="selectSpec('${esc(sp)}')">${esc(sp)}</div>`).join('')}</div>`;}
+function selectBrand(b){currentSelectedBrand=b;const specs=[...new Set(products.filter(p=>p.brand===b).map(p=>p.spec).filter(Boolean))];currentSelectedSpec=specs[0]||'';renderOrder();}
+function selectSpec(s){currentSelectedSpec=s;renderOrder();}
+function calculateLiveOrderAmounts(){let s=0,sku=0;products.forEach(p=>{const it=orderData.items[p.id];const q=orderQtyTotal(p,it);if(q>0)sku++;s+=q*Number(it.price||0);});document.getElementById('liveAmountBanner').innerHTML=`<span style="font-size:15px;color:var(--primary);">💵 <strong>实时预估实收：${s.toFixed(2)} 元</strong></span><br>选购品项：${sku} 款`;return s;}
+function renderOrder(){const displayProducts=products.filter(p=>p.brand===currentSelectedBrand&&p.spec===currentSelectedSpec);document.getElementById('list').innerHTML=`<div class="big-store-title">${esc(currentStore.name||'门店开单')}</div><div class='sub' style='font-weight:700;color:var(--primary);font-size:15px;'>业务员：${esc(currentEmployee.name||currentEmployee.code)}</div><div id="liveAmountBanner" class="amount-summary-banner"></div>${generateFilterHeaderHtml()}${displayProducts.map(p=>{const it=orderData.items[p.id],three=isThreeLevelProduct(p);const casePicker=three?'':`<div class="picker-wrapper"><span class="label-txt">销售:</span><select class="ios-picker" onchange="pickerChange('${esc(p.id)}','cases',this.value)">${makePureQtyOptionsHtml(50,it.cases)}</select><span class="unit-txt">件</span></div>`;const boxPicker=p.pcs_per_box>0?`<div class="picker-wrapper">${three?'<span class="label-txt">销售:</span>':''}<select class="ios-picker" onchange="pickerChange('${esc(p.id)}','boxes',this.value)">${makePureQtyOptionsHtml(50,it.boxes)}</select><span class="unit-txt">盒</span></div>`:'';return `<div class='item'><div class="item-main-row"><div class='prod-info'><div class='prod-name'>${esc(p.product_name)}</div><div class='sub'>库存：${Number(stockMap[p.id]||0)}${esc(p.unit)} ｜ 条码：${esc(p.id)}</div></div><div class='control-group'>${casePicker}${boxPicker}<div class="picker-wrapper"><select class="ios-picker" onchange="pickerChange('${esc(p.id)}','pcs',this.value)">${makePureQtyOptionsHtml(100,it.pcs)}</select><span class="unit-txt">${esc(p.unit)}</span></div><div class="picker-wrapper" style="margin-left:auto;"><span class="label-txt">散件价:</span><select class="ios-picker" onchange="pickerPrice('${esc(p.id)}',this.value)">${makePurePriceOptionsHtml(p.default_price,it.price)}</select><span class="unit-txt">元/${esc(p.unit)}</span></div></div></div></div>`}).join('')}`;calculateLiveOrderAmounts();}
+function pickerChange(id,type,value){orderData.items[id][type]=Number(value||0);calculateLiveOrderAmounts();}
+function pickerPrice(id,value){const p=products.find(x=>x.id===id);if(!p)return;products.filter(x=>x.brand===p.brand&&x.spec===p.spec).forEach(x=>orderData.items[x.id].price=Number(value||0));renderOrder();}
+async function submitOrder(){let formattedItemsPayload=[],stockUpdatesPayload=[],total=0;const {data:currentStocks}=await client.from('van_stocks').select('*').eq('employee_code',currentEmployee.code);const live={};(currentStocks||[]).forEach(st=>live[st.product_barcode]=Number(st.qty||0));products.forEach(p=>{const it=orderData.items[p.id];const q=orderQtyTotal(p,it);if(q>0){const amount=q*Number(it.price||0);total+=amount;formattedItemsPayload.push({barcode:String(p.id),product_name:String(p.product_name),qty:Number(q),unit_price:Number(it.price||0),amount:Number(amount.toFixed(2)),remark:''});stockUpdatesPayload.push({product_barcode:String(p.id),qty:Number(live[p.id]||0)-q});}});if(!formattedItemsPayload.length){alert('⚠️ 空白单据无法提交！');return;}const finalOrderNo='SO'+Date.now()+Math.floor(Math.random()*1000);const {error}=await client.rpc('submit_sales_order_v2',{p_order_no:finalOrderNo,p_employee_code:String(currentEmployee.code),p_atom_code:String(currentStore.atom),p_store_name:String(currentStore.name),p_total_amount:Number(total.toFixed(2)),p_items:formattedItemsPayload,p_stock_updates:stockUpdatesPayload});if(error){alert('❌ 账单保存被拦截: '+error.message);return;}location.href=`store.html?atom=${encodeURIComponent(currentStore.atom)}&name=${encodeURIComponent(currentStore.name)}`;}
+function goBack(){location.href=`store.html?atom=${encodeURIComponent(currentStore.atom)}&name=${encodeURIComponent(currentStore.name)}`;}
+init();
+</script>
+</body>
+</html>

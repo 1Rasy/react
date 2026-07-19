@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>商品表管理</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <style>
+    :root { --primary:#4A154B; --bg:#f4f2f5; --card:#fff; --text:#1f1121; --muted:#756676; --line:#e7e1e8; --ok:#16a34a; --danger:#dc2626; --warn:#f59e0b; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; background:var(--bg); color:var(--text); padding:12px; -webkit-tap-highlight-color:transparent; }
+    .card { max-width:1320px; margin:0 auto; background:var(--card); border-radius:14px; padding:14px; box-shadow:0 4px 14px rgba(74,21,75,.06); }
+    .top { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:12px; }
+    h1 { margin:0; font-size:21px; color:var(--primary); }
+    .btn { border:1px solid var(--line); background:#fff; color:var(--text); border-radius:9px; padding:9px 12px; font-weight:700; cursor:pointer; }
+    .btn.primary { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .btn.warn { background:#fffbeb; color:#92400e; border-color:#fde68a; }
+    .btn:disabled { opacity:.55; cursor:not-allowed; }
+    .toolbar { display:grid; grid-template-columns:1fr auto; gap:8px; margin:12px 0; align-items:center; }
+    .search { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:9px; font-size:15px; outline:none; }
+    .status { font-size:13px; color:var(--muted); margin:8px 0; }
+    .sort-tip { display:none; font-size:12px; color:#92400e; background:#fffbeb; border:1px solid #fde68a; padding:8px 10px; border-radius:9px; margin:-3px 0 9px; }
+    body.sorting .sort-tip { display:block; }
+    .sort-actions { display:none; flex-wrap:wrap; gap:8px; align-items:center; margin:8px 0 10px; padding:8px; border:1px dashed #d8d0da; border-radius:10px; background:#fbf9fc; }
+    body.sorting .sort-actions { display:flex; }
+    .sort-actions .btn { padding:7px 10px; font-size:13px; }
+    .sort-actions .hint { font-size:12px; color:var(--muted); }
+    .table-wrap { width:100%; overflow-x:hidden; overflow-y:auto; border:1px solid var(--line); border-radius:12px; max-height:calc(100vh - 190px); background:#fff; }
+    table { width:100%; min-width:0; table-layout:fixed; border-collapse:separate; border-spacing:0; }
+    th, td { border-bottom:1px solid var(--line); border-right:1px solid var(--line); padding:7px; vertical-align:middle; font-size:13px; white-space:nowrap; word-break:normal; }
+    th { position:sticky; top:0; z-index:2; background:#fbf9fc; color:var(--primary); text-align:left; font-weight:800; }
+
+    .sort-col { display:none; width:88px; text-align:center; }
+    body.sorting .sort-col { display:table-cell; }
+    .barcode-col { width:11%; }
+    .name-col { width:18%; }
+    .brand-col, .spec-col { width:9%; }
+    .flavor-col, .price-col, .count-col, .unit-col { width:8%; }
+    .enable-col { width:6%; text-align:center; }
+
+    .th-head { display:flex; align-items:center; justify-content:space-between; gap:6px; min-width:0; }
+    .th-head .title { display:block; min-width:0; }
+    .filter-btn { flex:0 0 auto; border:1px solid #d8d0da; background:#fff; color:var(--muted); border-radius:7px; padding:3px 5px; font-size:11px; font-weight:800; cursor:pointer; }
+    .filter-btn.active { background:var(--primary); border-color:var(--primary); color:#fff; }
+    .filter-panel { position:fixed; z-index:20; display:none; width:min(320px, calc(100vw - 24px)); max-height:390px; background:#fff; border:1px solid var(--line); border-radius:10px; box-shadow:0 12px 30px rgba(31,17,33,.18); padding:10px; }
+    .filter-panel.open { display:block; }
+    .filter-panel-title { color:var(--primary); font-weight:800; margin-bottom:8px; }
+    .filter-search { width:100%; padding:8px 9px; border:1px solid var(--line); border-radius:8px; font-size:13px; outline:none; margin-bottom:8px; }
+    .filter-options { max-height:220px; overflow:auto; border:1px solid #f0ebf1; border-radius:8px; padding:4px; }
+    .filter-option { display:flex; align-items:center; gap:7px; padding:6px; color:var(--text); font-weight:500; cursor:pointer; }
+    .filter-option:hover { background:#f7f4f8; }
+    .filter-option span { min-width:0; white-space:normal; word-break:break-word; }
+    .only-btn { margin-left:auto; border:0; background:#f4f2f5; color:var(--primary); border-radius:7px; padding:4px 7px; font-size:12px; font-weight:800; cursor:pointer; }
+    .filter-empty { padding:8px; color:var(--muted); }
+    .filter-actions { display:flex; justify-content:space-between; gap:8px; margin-top:9px; }
+    .filter-actions .btn { padding:7px 10px; font-size:12px; }
+
+    td input[type="text"], td input[type="number"] { width:100%; min-width:0; padding:7px; border:1px solid transparent; border-radius:7px; font-size:13px; background:#fafafa; }
+    td input[type="text"]:focus, td input[type="number"]:focus { outline:none; border-color:var(--primary); background:#fff; }
+    .dirty { background:#fff7ed !important; border-color:#fdba74 !important; }
+    .error { color:var(--danger); font-weight:700; }
+    .ok { color:var(--ok); font-weight:700; }
+    .new-row td { background:#fffbeb; }
+    .new-row input { border-color:#facc15 !important; background:#fff !important; }
+    .inline-actions { display:flex; gap:5px; flex-wrap:wrap; margin-top:6px; }
+    .inline-actions .btn { padding:5px 7px; border-radius:7px; font-size:12px; }
+
+    .sort-tools { display:flex; align-items:center; justify-content:center; gap:6px; }
+    .sort-check { width:18px; height:18px; cursor:pointer; }
+    tr.selected-row td { background:#f8f3ff; }
+
+    @media (max-width: 700px) {
+      body { padding:8px; }
+      .toolbar { grid-template-columns:1fr; }
+      .table-wrap { max-height:calc(100vh - 235px); }
+      .filter-panel { max-height:320px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="top">
+      <h1>商品表管理</h1>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn" onclick="location.href='dashboard.html'">← 返回管理后台</button>
+        <button class="btn" onclick="loadProducts()">刷新</button>
+        <button id="sortModeBtn" class="btn warn" onclick="toggleSortMode()">排序</button>
+        <button id="addProductBtn" class="btn" onclick="openInlineProductRow()">添加商品</button>
+        <button class="btn primary" onclick="saveAllDirty()">保存修改</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <input id="globalSearch" class="search" placeholder="搜索：条码 / 商品名 / 品牌 / 规格 / 口味 / 单位" oninput="applyFilters()">
+      <button class="btn" onclick="clearFilters()">清空筛选</button>
+    </div>
+
+    <div class="sort-tip">排序模式：勾选商品后点击“上移 / 下移 / 置顶 / 置底”，可多选批量排序。排序数字只写入后台，不在页面显示。</div>
+    <div class="sort-actions">
+      <button class="btn" onclick="selectVisibleSortRows(true)">全选当前筛选</button>
+      <button class="btn" onclick="selectVisibleSortRows(false)">取消选择</button>
+      <button class="btn warn" onclick="moveSelectedSortRows('top')">置顶</button>
+      <button class="btn" onclick="moveSelectedSortRows('up')">上移</button>
+      <button class="btn" onclick="moveSelectedSortRows('down')">下移</button>
+      <button class="btn warn" onclick="moveSelectedSortRows('bottom')">置底</button>
+      <span class="hint">选中多行后一起移动，点“保存修改”后生效。</span>
+    </div>
+    <div id="status" class="status">正在加载商品...</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="sort-col">排序</th>
+            <th class="barcode-col"><div class="th-head"><span class="title">条形码</span><button id="filterBtn_barcode" class="filter-btn" onclick="toggleFilterPanel(event,'barcode')">筛选</button></div></th>
+            <th class="name-col"><div class="th-head"><span class="title">商品名称</span><button id="filterBtn_name" class="filter-btn" onclick="toggleFilterPanel(event,'name')">筛选</button></div></th>
+            <th class="brand-col"><div class="th-head"><span class="title">品牌</span><button id="filterBtn_brand" class="filter-btn" onclick="toggleFilterPanel(event,'brand')">筛选</button></div></th>
+            <th class="spec-col"><div class="th-head"><span class="title">规格</span><button id="filterBtn_spec" class="filter-btn" onclick="toggleFilterPanel(event,'spec')">筛选</button></div></th>
+            <th class="flavor-col"><div class="th-head"><span class="title">口味</span><button id="filterBtn_flavor" class="filter-btn" onclick="toggleFilterPanel(event,'flavor')">筛选</button></div></th>
+            <th class="price-col"><div class="th-head"><span class="title">价格</span><button id="filterBtn_default_price" class="filter-btn" onclick="toggleFilterPanel(event,'default_price')">筛选</button></div></th>
+            <th class="count-col"><div class="th-head"><span class="title">件装数</span><button id="filterBtn_pcs_per_case" class="filter-btn" onclick="toggleFilterPanel(event,'pcs_per_case')">筛选</button></div></th>
+            <th class="count-col"><div class="th-head"><span class="title">盒装数</span><button id="filterBtn_pcs_per_box" class="filter-btn" onclick="toggleFilterPanel(event,'pcs_per_box')">筛选</button></div></th>
+            <th class="unit-col"><div class="th-head"><span class="title">单位</span><button id="filterBtn_unit" class="filter-btn" onclick="toggleFilterPanel(event,'unit')">筛选</button></div></th>
+            <th class="enable-col"><div class="th-head"><span class="title">拼盒</span><button id="filterBtn_allow_mix_box" class="filter-btn" onclick="toggleFilterPanel(event,'allow_mix_box')">筛选</button></div></th><th class="enable-col"><div class="th-head"><span class="title">启用</span><button id="filterBtn_is_active" class="filter-btn" onclick="toggleFilterPanel(event,'is_active')">筛选</button></div></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="filterPanel" class="filter-panel"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://wyjbnnqhiehjccmojbbg.supabase.co";
+const SUPABASE_KEY = "sb_publishable_WwTC7079N2e8ZQwPKUj-Gw_ewFiviFG";
+const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let products = [];
+let filtered = [];
+let openFilterField = '';
+let filterSearchText = '';
+let showInlineNewProduct = false;
+let creatingProduct = false;
+let sortMode = false;
+const dirtyMap = new Map();
+const selectedSortIds = new Set();
+
+const editableFields = ['sort_order','barcode','name','brand','spec','flavor','default_price','pcs_per_case','pcs_per_box','unit','allow_mix_box','is_active'];
+const filterFields = ['is_active','allow_mix_box','barcode','name','brand','spec','flavor','default_price','pcs_per_case','pcs_per_box','unit'];
+const filterLabels = {
+  is_active: '启用', barcode: '条形码', name: '商品名称', brand: '品牌', spec: '规格', flavor: '口味',
+  default_price: '价格', pcs_per_case: '件装数', pcs_per_box: '盒装数', unit: '单位', allow_mix_box: '拼盒'
+};
+const columnFilters = Object.fromEntries(filterFields.map(field => [field, null]));
+
+function setStatus(msg, cls='') {
+  const el = document.getElementById('status');
+  el.className = 'status ' + cls;
+  el.textContent = msg;
+}
+
+function esc(v) {
+  return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
+
+function getTrimmed(id) {
+  return document.getElementById(id).value.trim();
+}
+
+function toNumber(id, fallback) {
+  const text = getTrimmed(id);
+  if (text === '') return fallback;
+  const num = Number(text);
+  return Number.isFinite(num) ? num : fallback;
+}
+
+function productSortValue(p) {
+  const n = Number(p.sort_order);
+  if (Number.isFinite(n) && n > 0) return n;
+  const idNum = Number(p.id);
+  return Number.isFinite(idNum) ? idNum * 10 : 999999;
+}
+
+function compareProducts(a, b) {
+  const diff = productSortValue(a) - productSortValue(b);
+  if (diff !== 0) return diff;
+  return Number(a.id || 0) - Number(b.id || 0);
+}
+
+function sortProducts() {
+  products.sort(compareProducts);
+}
+
+function normalizeAllSortOrders() {
+  products.forEach((p, index) => {
+    const next = (index + 1) * 10;
+    if (Number(p.sort_order || 0) !== next) {
+      p.sort_order = next;
+      if (!dirtyMap.has(String(p.id))) dirtyMap.set(String(p.id), {});
+      dirtyMap.get(String(p.id)).sort_order = next;
+    }
+  });
+}
+
+async function loadProducts() {
+  setStatus('正在加载商品...');
+  dirtyMap.clear();
+  selectedSortIds.clear();
+  showInlineNewProduct = false;
+  updateAddProductButton();
+  closeFilterPanel();
+  const { data, error } = await client
+    .from('products')
+    .select('id, sort_order, barcode, name, brand, spec, flavor, default_price, pcs_per_case, pcs_per_box, unit, allow_mix_box, is_active, created_at')
+    .order('sort_order', { ascending: true })
+    .order('id', { ascending: true });
+  if (error) {
+    console.error(error);
+    setStatus('加载失败：' + error.message + '。如果提示 sort_order 不存在，请先给 products 表添加 sort_order 字段。', 'error');
+    return;
+  }
+  products = (data || []).map(p => ({ ...p, sort_order: Number(p.sort_order || 0), unit: p.unit || '个' }));
+  sortProducts();
+  applyFilters();
+}
+
+function getFilter(id) { return document.getElementById(id).value.trim(); }
+
+function getFilterKey(p, field) {
+  if (field === 'is_active') return p.is_active ? 'true' : 'false';
+  if (field === 'allow_mix_box') return p.allow_mix_box ? 'true' : 'false';
+  return String(p[field] ?? '');
+}
+
+function displayFilterValue(field, key) {
+  if (field === 'is_active') return key === 'true' ? '启用' : '停用';
+  if (field === 'allow_mix_box') return key === 'true' ? '\u53ef\u62fc\u76d2' : '\u4e0d\u53ef\u62fc\u76d2';
+  return key === '' ? '(空白)' : key;
+}
+
+function productMatches(p, excludeField='') {
+  const global = getFilter('globalSearch').toLowerCase();
+  const blob = [p.barcode,p.name,p.brand,p.spec,p.flavor,p.unit].map(x => String(x||'').toLowerCase()).join(' ');
+  if (global && !blob.includes(global)) return false;
+
+  for (const field of filterFields) {
+    if (field === excludeField) continue;
+    const selected = columnFilters[field];
+    if (selected !== null && !selected.has(getFilterKey(p, field))) return false;
+  }
+  return true;
+}
+
+function applyFilters() {
+  sortProducts();
+  filtered = products.filter(p => productMatches(p));
+  renderTable();
+  updateFilterButtons();
+  if (openFilterField) renderFilterPanel(openFilterField);
+}
+
+function clearFilters() {
+  document.getElementById('globalSearch').value = '';
+  filterFields.forEach(field => columnFilters[field] = null);
+  filterSearchText = '';
+  closeFilterPanel();
+  applyFilters();
+}
+
+function updateFilterButtons() {
+  filterFields.forEach(field => {
+    const btn = document.getElementById('filterBtn_' + field);
+    if (!btn) return;
+    const selected = columnFilters[field];
+    const active = selected !== null;
+    btn.classList.toggle('active', active);
+    btn.textContent = active ? `已选${selected.size}` : '筛选';
+  });
+}
+
+function getFilterOptions(field) {
+  const map = new Map();
+  products.filter(p => productMatches(p, field)).forEach(p => {
+    const key = getFilterKey(p, field);
+    map.set(key, displayFilterValue(field, key));
+  });
+  return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1], 'zh-Hans-CN', { numeric: true }));
+}
+
+function toggleFilterPanel(event, field) {
+  event.stopPropagation();
+  if (openFilterField === field) {
+    closeFilterPanel();
+    return;
+  }
+  openFilterField = field;
+  filterSearchText = '';
+  renderFilterPanel(field);
+  positionFilterPanel(event.currentTarget);
+}
+
+function positionFilterPanel(button) {
+  const panel = document.getElementById('filterPanel');
+  const rect = button.getBoundingClientRect();
+  const gap = 6;
+  const left = Math.min(rect.left, window.innerWidth - panel.offsetWidth - 8);
+  panel.style.left = Math.max(8, left) + 'px';
+  panel.style.top = Math.min(rect.bottom + gap, window.innerHeight - panel.offsetHeight - 8) + 'px';
+}
+
+function renderFilterPanel(field) {
+  const panel = document.getElementById('filterPanel');
+  const selected = columnFilters[field];
+  const q = filterSearchText.toLowerCase();
+  const options = getFilterOptions(field).filter(([, label]) => !q || label.toLowerCase().includes(q));
+  const optionHtml = options.length ? options.map(([key, label]) => `
+    <label class="filter-option">
+      <input type="checkbox" data-field="${esc(field)}" data-key="${esc(key)}" ${selected === null || selected.has(key) ? 'checked' : ''} onchange="toggleFilterValueFromInput(this)">
+      <span>${esc(label)}</span>
+      <button type="button" class="only-btn" data-field="${esc(field)}" data-key="${esc(key)}" onclick="onlyFilterValueFromButton(event,this)">只看</button>
+    </label>
+  `).join('') : '<div class="filter-empty">没有可选项</div>';
+
+  panel.innerHTML = `
+    <div class="filter-panel-title">${esc(filterLabels[field])}</div>
+    <input class="filter-search" placeholder="搜索此列" value="${esc(filterSearchText)}" oninput="filterSearchText=this.value; renderFilterPanel('${esc(field)}')" onclick="event.stopPropagation()">
+    <div class="filter-options">${optionHtml}</div>
+    <div class="filter-actions">
+      <button class="btn" onclick="selectAllFilterValues('${esc(field)}')">全选</button>
+      <button class="btn" onclick="clearColumnSelection('${esc(field)}')">清空选择</button>
+      <button class="btn primary" onclick="closeFilterPanel()">确定</button>
+    </div>
+  `;
+  panel.classList.add('open');
+}
+
+function toggleFilterValueFromInput(input) {
+  toggleFilterValue(input.dataset.field, input.dataset.key, input.checked);
+}
+
+function onlyFilterValueFromButton(event, button) {
+  event.stopPropagation();
+  onlyFilterValue(button.dataset.field, button.dataset.key);
+}
+
+function toggleFilterValue(field, key, checked) {
+  let selected = columnFilters[field];
+  if (selected === null) {
+    selected = new Set(getFilterOptions(field).map(([optionKey]) => optionKey));
+    columnFilters[field] = selected;
+  }
+  if (checked) selected.add(key);
+  else selected.delete(key);
+
+  const allKeys = getFilterOptions(field).map(([optionKey]) => optionKey);
+  if (allKeys.length > 0 && selected.size === allKeys.length && allKeys.every(optionKey => selected.has(optionKey))) columnFilters[field] = null;
+  applyFilters();
+}
+
+function onlyFilterValue(field, key) {
+  columnFilters[field] = new Set([key]);
+  applyFilters();
+}
+
+function selectAllFilterValues(field) {
+  columnFilters[field] = null;
+  applyFilters();
+}
+
+function clearColumnSelection(field) {
+  columnFilters[field] = new Set();
+  applyFilters();
+}
+
+function closeFilterPanel() {
+  openFilterField = '';
+  const panel = document.getElementById('filterPanel');
+  panel.classList.remove('open');
+  panel.innerHTML = '';
+}
+
+document.addEventListener('click', event => {
+  const panel = document.getElementById('filterPanel');
+  if (!panel.contains(event.target) && !event.target.closest('.filter-btn')) closeFilterPanel();
+});
+window.addEventListener('resize', closeFilterPanel);
+
+function markDirty(id, field, value) {
+  const original = products.find(p => String(p.id) === String(id));
+  if (!original) return;
+  let normalized = value;
+  if (['sort_order','default_price','pcs_per_case','pcs_per_box'].includes(field)) normalized = value === '' ? null : Number(value);
+  if (field === 'is_active'||field === 'allow_mix_box') normalized = !!value;
+
+  original[field] = normalized;
+
+  if (!dirtyMap.has(String(id))) dirtyMap.set(String(id), {});
+  const patch = dirtyMap.get(String(id));
+  patch[field] = normalized;
+
+  const el = document.querySelector(`[data-id="${CSS.escape(String(id))}"][data-field="${field}"]`);
+  if (el) el.classList.add('dirty');
+  setStatus(`已修改 ${dirtyMap.size} 条，记得保存。`);
+}
+
+function renderInput(p, field, type='text') {
+  const val = p[field] ?? '';
+  return `<input data-id="${esc(p.id)}" data-field="${field}" type="${type}" value="${esc(val)}" onchange="markDirty('${esc(p.id)}','${field}',this.value)">`;
+}
+
+function renderNewProductRow() {
+  if (!showInlineNewProduct) return '';
+  return `
+    <tr class="new-row">
+      <td class="sort-col">新增</td>
+      <td class="barcode-col"><input id="new_barcode" type="text" autocomplete="off" placeholder="必填"></td>
+      <td class="name-col"><input id="new_name" type="text" autocomplete="off" placeholder="必填"></td>
+      <td class="brand-col"><input id="new_brand" type="text" autocomplete="off"></td>
+      <td class="spec-col"><input id="new_spec" type="text" autocomplete="off"></td>
+      <td class="flavor-col"><input id="new_flavor" type="text" autocomplete="off"></td>
+      <td class="price-col"><input id="new_default_price" type="number" step="0.01" value="0"></td>
+      <td class="count-col"><input id="new_pcs_per_case" type="number" step="1" value="1"></td>
+      <td class="count-col"><input id="new_pcs_per_box" type="number" step="1" value="0"></td>
+      <td class="unit-col">
+        <input id="new_unit" type="text" value="个" autocomplete="off">
+        <div class="inline-actions">
+          <button id="createProductBtn" class="btn primary" onclick="createProduct()">提交</button>
+          <button class="btn" onclick="cancelInlineProductRow()">取消</button>
+        </div>
+      </td>
+      <td class="enable-col"><input id="new_allow_mix_box" type="checkbox"></td><td class="enable-col"><input id="new_is_active" type="checkbox" checked></td>
+    </tr>
+  `;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tbody');
+  const rows = filtered.map(p => {
+    const id = String(p.id);
+    const selected = selectedSortIds.has(id);
+    return `
+      <tr data-product-id="${esc(id)}" class="${selected ? 'selected-row' : ''}">
+        <td class="sort-col">
+          <div class="sort-tools">
+            <input class="sort-check" type="checkbox" ${selected ? 'checked' : ''} onchange="toggleSortSelected('${esc(id)}',this.checked)">
+          </div>
+        </td>
+        <td class="barcode-col">${renderInput(p,'barcode')}</td>
+        <td class="name-col">${renderInput(p,'name')}</td>
+        <td class="brand-col">${renderInput(p,'brand')}</td>
+        <td class="spec-col">${renderInput(p,'spec')}</td>
+        <td class="flavor-col">${renderInput(p,'flavor')}</td>
+        <td class="price-col">${renderInput(p,'default_price','number')}</td>
+        <td class="count-col">${renderInput(p,'pcs_per_case','number')}</td>
+        <td class="count-col">${renderInput(p,'pcs_per_box','number')}</td>
+        <td class="unit-col">${renderInput(p,'unit')}</td>
+        <td class="enable-col"><input data-id="${esc(id)}" data-field="allow_mix_box" type="checkbox" ${p.allow_mix_box ? 'checked' : ''} onchange="markDirty('${esc(id)}','allow_mix_box',this.checked)"></td>
+        <td class="enable-col"><input data-id="${esc(id)}" data-field="is_active" type="checkbox" ${p.is_active ? 'checked' : ''} onchange="markDirty('${esc(id)}','is_active',this.checked)"></td>
+      </tr>
+    `;
+  }).join('');
+  tbody.innerHTML = renderNewProductRow() + rows;
+  updateAddProductButton();
+  updateSortModeButton();
+  setStatus(`共 ${products.length} 条，当前筛选 ${filtered.length} 条。已选择排序 ${selectedSortIds.size} 条。未保存修改 ${dirtyMap.size} 条。`);
+}
+
+function toggleSortMode() {
+  sortMode = !sortMode;
+  selectedSortIds.clear();
+  closeFilterPanel();
+  document.body.classList.toggle('sorting', sortMode);
+  renderTable();
+  setStatus(sortMode ? '已进入排序模式：勾选商品后点击上移/下移/置顶/置底。' : '已退出排序模式。');
+}
+
+function updateSortModeButton() {
+  const btn = document.getElementById('sortModeBtn');
+  if (!btn) return;
+  btn.textContent = sortMode ? '退出排序' : '排序';
+  btn.classList.toggle('primary', sortMode);
+  btn.classList.toggle('warn', !sortMode);
+}
+
+function toggleSortSelected(id, checked) {
+  if (checked) selectedSortIds.add(String(id));
+  else selectedSortIds.delete(String(id));
+  renderTable();
+}
+
+function selectVisibleSortRows(checked) {
+  if (checked) {
+    filtered.forEach(p => selectedSortIds.add(String(p.id)));
+  } else {
+    selectedSortIds.clear();
+  }
+  renderTable();
+}
+
+function moveSelectedSortRows(action) {
+  if (!sortMode) {
+    setStatus('请先点击“排序”进入排序模式。', 'error');
+    return;
+  }
+  if (selectedSortIds.size === 0) {
+    setStatus('请先勾选要排序的商品。', 'error');
+    return;
+  }
+
+  sortProducts();
+  let ordered = [...products];
+
+  if (action === 'top') {
+    const moving = ordered.filter(p => selectedSortIds.has(String(p.id)));
+    const rest = ordered.filter(p => !selectedSortIds.has(String(p.id)));
+    ordered = [...moving, ...rest];
+  } else if (action === 'bottom') {
+    const moving = ordered.filter(p => selectedSortIds.has(String(p.id)));
+    const rest = ordered.filter(p => !selectedSortIds.has(String(p.id)));
+    ordered = [...rest, ...moving];
+  } else if (action === 'up') {
+    for (let i = 1; i < ordered.length; i++) {
+      const currentSelected = selectedSortIds.has(String(ordered[i].id));
+      const prevSelected = selectedSortIds.has(String(ordered[i - 1].id));
+      if (currentSelected && !prevSelected) {
+        [ordered[i - 1], ordered[i]] = [ordered[i], ordered[i - 1]];
+      }
+    }
+  } else if (action === 'down') {
+    for (let i = ordered.length - 2; i >= 0; i--) {
+      const currentSelected = selectedSortIds.has(String(ordered[i].id));
+      const nextSelected = selectedSortIds.has(String(ordered[i + 1].id));
+      if (currentSelected && !nextSelected) {
+        [ordered[i], ordered[i + 1]] = [ordered[i + 1], ordered[i]];
+      }
+    }
+  }
+
+  products = ordered;
+  normalizeAllSortOrders();
+  applyFilters();
+
+  const actionText = { top:'置顶', up:'上移', down:'下移', bottom:'置底' }[action] || '排序';
+  setStatus(`已${actionText} ${selectedSortIds.size} 条商品，未保存修改 ${dirtyMap.size} 条。`, 'ok');
+}
+
+function updateAddProductButton() {
+  const btn = document.getElementById('addProductBtn');
+  if (!btn) return;
+  btn.disabled = showInlineNewProduct || creatingProduct || sortMode;
+  btn.textContent = sortMode ? '排序中不可新增' : (showInlineNewProduct ? '正在添加' : '添加商品');
+}
+
+function openInlineProductRow() {
+  if (sortMode) {
+    setStatus('排序模式下不能新增商品，请先退出排序。', 'error');
+    return;
+  }
+
+  closeFilterPanel();
+  if (showInlineNewProduct) {
+    const input = document.getElementById('new_barcode');
+    if (input) input.focus();
+    return;
+  }
+  showInlineNewProduct = true;
+  renderTable();
+  setStatus('请在列表最上方填写新商品，条形码和商品名称必填。');
+  setTimeout(() => {
+    const wrap = document.querySelector('.table-wrap');
+    if (wrap) wrap.scrollTop = 0;
+    const input = document.getElementById('new_barcode');
+    if (input) input.focus();
+  }, 0);
+}
+
+function cancelInlineProductRow() {
+  if (creatingProduct) return;
+  showInlineNewProduct = false;
+  renderTable();
+}
+
+async function createProduct() {
+  const btn = document.getElementById('createProductBtn');
+  const nextSortOrder = products.length ? Math.max(...products.map(productSortValue)) + 10 : 10;
+  const payload = {
+    sort_order: nextSortOrder,
+    barcode: getTrimmed('new_barcode'),
+    name: getTrimmed('new_name'),
+    brand: getTrimmed('new_brand'),
+    spec: getTrimmed('new_spec'),
+    flavor: getTrimmed('new_flavor'),
+    default_price: toNumber('new_default_price', 0),
+    pcs_per_case: toNumber('new_pcs_per_case', 1),
+    pcs_per_box: toNumber('new_pcs_per_box', 0),
+    unit: getTrimmed('new_unit') || '个',
+    allow_mix_box: document.getElementById('new_allow_mix_box').checked,
+    is_active: document.getElementById('new_is_active').checked
+  };
+  if (!payload.barcode || !payload.name) {
+    setStatus('新增失败：条形码和商品名称不能为空。', 'error');
+    return;
+  }
+
+  creatingProduct = true;
+  updateAddProductButton();
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '提交中';
+  }
+
+  const { data, error } = await client
+    .from('products')
+    .insert(payload)
+    .select('id, sort_order, barcode, name, brand, spec, flavor, default_price, pcs_per_case, pcs_per_box, unit, allow_mix_box, is_active, created_at')
+    .single();
+
+  creatingProduct = false;
+
+  if (error) {
+    console.error(error);
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '提交';
+    }
+    updateAddProductButton();
+    setStatus('新增失败：' + error.message, 'error');
+    return;
+  }
+
+  products.push({ ...data, sort_order: Number(data.sort_order || nextSortOrder), unit: data.unit || '个' });
+  showInlineNewProduct = false;
+  setStatus('已添加：' + (data.name || data.barcode), 'ok');
+  applyFilters();
+}
+
+async function saveRow(id) {
+  const patch = dirtyMap.get(String(id));
+  if (!patch) return true;
+  const cleanPatch = {};
+  editableFields.forEach(k => { if (Object.prototype.hasOwnProperty.call(patch, k)) cleanPatch[k] = patch[k]; });
+  if (Object.prototype.hasOwnProperty.call(cleanPatch, 'unit') && String(cleanPatch.unit || '').trim() === '') cleanPatch.unit = '个';
+
+  const { data, error } = await client
+    .from('products')
+    .update(cleanPatch)
+    .eq('id', id)
+    .select('id, sort_order, barcode, name, brand, spec, flavor, default_price, pcs_per_case, pcs_per_box, unit, allow_mix_box, is_active, created_at')
+    .single();
+
+  if (error) {
+    console.error(error);
+    setStatus('保存失败：' + error.message, 'error');
+    return false;
+  }
+
+  const idx = products.findIndex(p => String(p.id) === String(id));
+  if (idx >= 0) products[idx] = { ...products[idx], ...data, sort_order: Number(data.sort_order || 0), unit: data.unit || '个' };
+  dirtyMap.delete(String(id));
+  return true;
+}
+
+async function saveAllDirty() {
+  const ids = Array.from(dirtyMap.keys());
+  if (ids.length === 0) { setStatus('没有需要保存的修改。'); return; }
+  setStatus(`正在保存 ${ids.length} 条...`);
+  let okCount = 0;
+  for (const id of ids) {
+    const ok = await saveRow(id);
+    if (!ok) break;
+    okCount++;
+  }
+  if (dirtyMap.size === 0) {
+    setStatus(`全部修改已保存，共 ${okCount} 条。`, 'ok');
+    loadProducts();
+  } else {
+    setStatus(`部分保存失败，剩余 ${dirtyMap.size} 条未保存。`, 'error');
+    applyFilters();
+  }
+}
+
+loadProducts();
+</script>
+</body>
+</html>
+

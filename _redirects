@@ -1,0 +1,28 @@
+/index.html / 301
+/store.html /store 301
+/dashboard.html /dashboard 301
+/products.html /products 301
+/employees.html /employees 301
+/store_import.html /store_import 301
+/stock_summary.html /stock_summary 301
+/stock_jn.html /stock_jn 301
+/stock_ct.html /stock_ct 301
+/stock-adjustment-review.html /stock-adjustment-review 301
+/stock-adjustment-review-legacy.html /stock-adjustment-review-legacy 301
+/inventory-movements.html /inventory-movements 301
+/inventory-movements-legacy.html /inventory-movements-legacy 301
+
+/index /index.html 200
+/store /store.html 200
+/dashboard /dashboard.html 200
+/products /products.html 200
+/employees /employees.html 200
+/store_import /store_import.html 200
+/stock_summary /stock_summary.html 200
+/stock_jn /stock_jn.html 200
+/stock_ct /stock_ct.html 200
+/stock-adjustment-review /stock-adjustment-review.html 200
+/stock-adjustment-review-legacy /stock-adjustment-review-legacy.html 200
+/inventory-movements /inventory-movements.html 200
+/inventory-movements-legacy /inventory-movements-legacy.html 200
+

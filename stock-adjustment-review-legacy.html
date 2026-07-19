@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>库存调整审核</title>
+  <link rel="stylesheet" href="stock-adjustment.css">
+  <link rel="stylesheet" href="stock-adjustment-admin-enhancements.css">
+</head>
+<body>
+  <main class="shell admin-stock-page">
+    <section class="page-card page-header-card">
+      <div class="page-header">
+        <div class="page-title-wrap">
+          <h1>库存调整审核</h1>
+        </div>
+        <div class="page-actions">
+          <button class="btn" onclick="location.href='stock_summary'">返回库存管理</button>
+          <button id="refresh" class="btn primary">刷新</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="reviewMetrics" class="metric-grid">
+      <div class="metric"><div class="metric-label">待审核申请</div><div class="metric-value">-</div></div>
+      <div class="metric"><div class="metric-label">待审核商品行</div><div class="metric-value">-</div></div>
+    </section>
+
+    <section class="page-card">
+      <div class="table-head"><h2>待审核队列</h2><span id="reviewStatus" class="table-count">正在加载...</span></div>
+      <div id="queue" class="review-list"><div class="loading-state">正在加载待审核申请...</div></div>
+    </section>
+
+    <section class="page-card">
+      <div class="table-head"><h2>审核历史</h2><span id="historyStatus" class="table-count">正在加载...</span></div>
+      <div id="history" class="review-history-list"><div class="loading-state">正在加载审核历史...</div></div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>const client=supabase.createClient('https://wyjbnnqhiehjccmojbbg.supabase.co','sb_publishable_WwTC7079N2e8ZQwPKUj-Gw_ewFiviFG');</script>
+  <script src="stock-adjustment-core.js"></script>
+  <script src="stock-adjustment-api.js"></script>
+  <script src="stock-adjustment-review.js"></script>
+</body>
+</html>

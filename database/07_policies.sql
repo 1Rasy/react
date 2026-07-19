@@ -1,0 +1,30 @@
+-- Supabase database documentation export
+-- Project: new (wyjbnnqhiehjccmojbbg)
+-- Schema: public
+-- Object type: row level security policies
+-- Generated at: 2026-06-21 01:15:42 +08
+
+-- No RLS policies were found in public schema.
+-- Current RLS status observed from Supabase metadata:
+--   public.raw_dealer_outbounds     RLS disabled
+--   public.employees                RLS disabled
+--   public.dealer_employee_mappings RLS disabled
+--   public.products                 RLS disabled
+--   public.van_stocks               RLS disabled
+--   public.employee_store_assets    RLS disabled
+--   public.sales_orders             RLS disabled
+--   public.sales_order_items        RLS disabled
+--   public.temp_upload_assets       RLS disabled
+
+-- Suggested remediation to review manually, not executed:
+-- ALTER TABLE public.raw_dealer_outbounds ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE public.employees ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE public.dealer_employee_mappings ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE public.van_stocks ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE public.employee_store_assets ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE public.sales_orders ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE public.sales_order_items ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE public.temp_upload_assets ENABLE ROW LEVEL SECURITY;
+--
+-- Do not enable RLS without defining policies for the actual access model.

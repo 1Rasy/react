@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<title>卖进数据</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<style>
+:root { --primary:#4A154B; --primary-hover:#360f37; --accent:#ffb81c; --bg-main:#f4f2f5; --text-main:#1f1121; --text-muted:#756676; --card-bg:#ffffff; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; margin:0; background:var(--bg-main); color:var(--text-main); padding-bottom:90px; -webkit-tap-highlight-color:transparent; }
+.card { background:var(--card-bg); margin:12px; padding:16px; border-radius:12px; box-shadow:0 4px 12px rgba(74,21,75,0.03); position:relative; }
+.top-action-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.back-btn { display:inline-flex; align-items:center; justify-content:center; background:#f4f2f5; color:var(--text-main); padding:10px 18px; border-radius:20px; font-size:14px; font-weight:600; cursor:pointer; border:1px solid #e2dde3; }
+.back-btn::before { content:"←"; margin-right:6px; font-weight:bold; font-size:16px; }
+.big-store-title { font-size:22px; font-weight:800; color:#111827; margin:4px 0 14px 0; letter-spacing:-.5px; }
+.sub { font-size:13px; color:var(--text-muted); margin-top:2px; }
+.smallbtn { background:#f4f2f5; color:var(--text-main); border:1px solid #e2dde3; padding:5px 10px; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; }
+.date-picker-wrapper { position:relative; display:inline-block; }
+.real-date-input { padding:7px 10px; border:1px solid #e2dde3; border-radius:6px; background:#fff; }
+.amount-summary-banner { background:#fdfdfd; border:1px solid #ebdfee; border-left:5px solid var(--primary); padding:10px 12px; border-radius:6px; margin:10px 0; font-size:14px; color:#2b1d2c; }
+.history-item { background:#faf9fa; padding:14px 16px; margin-bottom:10px; border-radius:8px; border:1px solid #eeeade; display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
+</style>
+</head>
+<body>
+<div class="card"><div class="top-action-bar"><div class="back-btn" onclick="location.href='store.html'">返回</div></div><div id="list">正在加载...</div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://wyjbnnqhiehjccmojbbg.supabase.co";
+const SUPABASE_KEY="sb_publishable_WwTC7079N2e8ZQwPKUj-Gw_ewFiviFG";
+const client=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const currentEmployee={code:sessionStorage.getItem('current_employee_code'),name:sessionStorage.getItem('current_employee_name')};
+if(!currentEmployee.code){alert('当前无登录员工，请重新选择员工！');location.href='index.html';}
+let selectedReportDate='';
+function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+async function openSaleReport(targetDate){selectedReportDate=targetDate||'';document.getElementById('list').innerHTML=`<div class="big-store-title">📊 卖进数据</div><div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;"><button class="smallbtn" onclick="openSaleReport('')">全部历史</button><input class="real-date-input" type="date" value="${selectedReportDate}" onchange="openSaleReport(this.value)"></div><div class="amount-summary-banner">正在统计...</div>`;let query=client.from('sales_orders').select('*').eq('employee_code',currentEmployee.code).order('created_at',{ascending:false});if(selectedReportDate){query=query.gte('created_at',`${selectedReportDate}T00:00:00`).lte('created_at',`${selectedReportDate}T23:59:59`);}const {data:dayOrders,error}=await query;if(error){document.querySelector('.amount-summary-banner').innerHTML='加载失败：'+error.message;return;}if(!dayOrders||!dayOrders.length){document.querySelector('.amount-summary-banner').innerHTML='暂无数据';return;}const orderNos=dayOrders.map(o=>o.order_no);const {data:items}=await client.from('sales_order_items').select('*').in('order_no',orderNos);const orderSummaryMap={};dayOrders.forEach(o=>{const displayDate=o.created_at?o.created_at.split('T')[0]:'未知';orderSummaryMap[o.order_no]={orderNo:o.order_no,orderDate:displayDate,atomCode:o.atom_code,storeName:o.store_name||`未知门店(${o.atom_code})`,netRevenue:0,skuCount:0};});let total=0;(items||[]).forEach(it=>{const amount=Number(it.amount||0);total+=amount;if(orderSummaryMap[it.order_no]){orderSummaryMap[it.order_no].netRevenue+=amount;orderSummaryMap[it.order_no].skuCount++;}});const rows=Object.values(orderSummaryMap);document.querySelector('.amount-summary-banner').innerHTML=`💰 总实收：<strong>${total.toFixed(2)} 元</strong> ｜ 单据：${rows.length}`;document.getElementById('list').innerHTML+=rows.map(r=>`<div class="history-item" onclick="location.href='store.html?atom=${encodeURIComponent(r.atomCode)}&name=${encodeURIComponent(r.storeName)}&order=${encodeURIComponent(r.orderNo)}'"><div style="font-weight:700;color:var(--primary);font-size:16px;">${esc(r.storeName)}</div><div class="sub">日期：${esc(r.orderDate)} ｜ 品项：${r.skuCount} ｜ 实收：${r.netRevenue.toFixed(2)} 元</div></div>`).join('');}
+openSaleReport('');
+</script>
+</body>
+</html>

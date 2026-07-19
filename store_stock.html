@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<title>门店开单</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="store-split-pages" content="store_stock.html store_report.html store_new.html">
+<link rel="stylesheet" href="store-style.css">
+<link rel="stylesheet" href="store-qty-popup.css">
+<link rel="stylesheet" href="store-stock-adjustment.css">
+<link rel="stylesheet" href="store-after-sales.css">
+</head>
+<body>
+<div class="card"><div id="searchBlock" class="search-wrapper"><input id="search" placeholder="🔍 输入门店名称或编码搜索店铺..." oninput="handleSearch()"><div id="clearSearch" class="search-clear-btn" onclick="clearSearchInput()">✕</div></div><div class="top-action-bar"><div id="back" class="back-btn" onclick="goBack()">返回</div></div><div id="list"></div><div id="alphabetSidebar" class="alphabet-sidebar hide"></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.18.3/dist/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>window.STORE_ENTRY='stock'</script>
+<script src="store-app.js"></script>
+<script src="stock-adjustment-core.js"></script>
+<script src="stock-adjustment-api.js"></script>
+<script src="store-stock-adjustment.js"></script>
+<script src="store-delivery-note.js"></script>
+<script src="store-mix-box-edit-fix.js"></script>
+<script src="store-qty-popup.js"></script>
+<script src="store-after-sales.js"></script>
+<script src="store-order-detail-fix.js"></script>
+<script src="store-stock-effective-date-fix.js"></script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+.hide { display: none !important; }
+
+.movements-filter-row {
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.range-btn {
+  min-height: 38px;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.range-btn.active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+.date-input {
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.date-range-picker { position: relative; }
+.date-range-input { width: 238px; cursor: pointer; }
+
+.date-range-panel {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  z-index: 50;
+  width: 520px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 14px 34px rgba(31, 17, 33, .16);
+}
+
+.inventory-movements-page .date-range-panel {
+  right: auto;
+  left: 0;
+}
+
+.range-cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.range-cal-head button {
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--primary);
+  font-weight: 950;
+}
+
+.range-cal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.range-month-title {
+  margin-bottom: 8px;
+  color: var(--primary);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.range-week,
+.range-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.range-week span {
+  color: var(--muted);
+  text-align: center;
+  font-size: 11px;
+}
+
+.range-day {
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: #fff;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.range-day.muted { color: #c8c0ca; }
+.range-day.in-range { background: #f1e9f3; }
+.range-day.active { background: var(--primary); color: #fff; }
+
+.range-picker-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.range-picker-actions button {
+  min-height: 32px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.review-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-history-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.review-history-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 14px;
+  background: var(--primary-soft);
+  cursor: pointer;
+  list-style: none;
+}
+
+.review-history-summary::-webkit-details-marker { display: none; }
+.review-history-summary::after { content: "▾"; color: var(--muted); font-size: 12px; }
+.review-history-card[open] .review-history-summary::after { transform: rotate(180deg); }
+
+.review-history-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.review-history-time {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.status-approved { background: #ecfdf3; color: var(--ok); }
+.status-rejected { background: #fef2f2; color: var(--danger); }
+
+.review-history-body {
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.review-history-meta {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.review-history-meta strong { color: var(--primary); }
+
+.review-history-rejection {
+  margin: 10px 0;
+  padding: 9px 11px;
+  border-left: 3px solid var(--danger);
+  border-radius: 6px;
+  background: #fff7f7;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.review-history-table-wrap { margin-top: 12px; }
+.history-table { min-width: 760px; }
