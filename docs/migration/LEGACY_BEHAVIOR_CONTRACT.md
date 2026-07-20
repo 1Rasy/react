@@ -16,17 +16,23 @@
 | `dashboard.html` | 管理看板 | `/dashboard` |
 | `products.html` | 商品管理 | `/products` |
 | `employees.html` | 员工管理 | `/employees` |
-| `store_import.html` | 门店全量同步导入 | `/store_import` |
-| `stock_import.html` | 吉能/长涛原始出库导入 | `/stock_import`（由 `cleanUrls` 提供） |
-| `stock_summary.html` | 库存管理和库存基线导入 | `/stock_summary` |
+| `store_import.html` | React 门店全量同步导入 | `/store_import` |
+| `store_import-legacy.html` | 门店全量同步导入旧版回退 | `/store_import-legacy` |
+| `stock_import.html` | React 吉能/长涛原始出库导入 | `/stock_import` |
+| `stock_import-legacy.html` | 吉能/长涛原始出库导入旧版回退 | `/stock_import-legacy` |
+| `stock_summary.html` | React 库存管理和库存基线导入 | `/stock_summary` |
+| `stock_summary-legacy.html` | 库存管理旧版回退 | `/stock_summary-legacy` |
 | `stock-adjustment-review.html` | 库存调整审核 | `/stock-adjustment-review` |
 | `stock-adjustment-review-legacy.html` | 库存调整审核旧版回退 | `/stock-adjustment-review-legacy` |
 | `inventory-movements.html` | 库存流水 | `/inventory-movements` |
-| `stock_jn.html`、`stock_ct.html` | 旧分渠道导入入口 | `/stock_jn`、`/stock_ct` |
+| `stock_jn.html` | React 吉能原始出库导入 | `/stock_jn` |
+| `stock_jn-legacy.html` | 吉能原始出库导入旧版回退 | `/stock_jn-legacy` |
+| `stock_ct.html` | React 长涛原始出库导入 | `/stock_ct` |
+| `stock_ct-legacy.html` | 长涛原始出库导入旧版回退 | `/stock_ct-legacy` |
 | `stock.html` | 调整申请跳转兼容页 | `/stock`（由 `cleanUrls` 提供） |
 | `order.html`、`report.html` | 旧独立开单/报表兼容页 | `/order`、`/report`（由 `cleanUrls` 提供） |
 
-`_redirects` 对主要入口执行 `.html -> clean URL` 的 301，以及 `clean URL -> .html` 的 200 rewrite；`vercel.json` 保持 `cleanUrls:true`、`trailingSlash:false`。React MPA 必须继续输出原有 18 个 HTML 文件，不能用 SPA fallback 替代。库存流水迁移后，`inventory-movements.html` 和 `/inventory-movements` 由 React 接管，旧实现保留在 `inventory-movements-legacy.html` 和 `/inventory-movements-legacy`。库存调整审核迁移后，`stock-adjustment-review.html` 和 `/stock-adjustment-review` 由 React 接管，旧实现保留在 `stock-adjustment-review-legacy.html` 和 `/stock-adjustment-review-legacy`。因此当前构建共输出 20 个业务 HTML 入口。
+`_redirects` 对主要入口执行 `.html -> clean URL` 的 301，以及 `clean URL -> .html` 的 200 rewrite；`vercel.json` 保持 `cleanUrls:true`、`trailingSlash:false`。React MPA 必须继续输出所有业务 HTML 文件，不能用 SPA fallback 替代。库存流水迁移后，`inventory-movements.html` 和 `/inventory-movements` 由 React 接管，旧实现保留在 `inventory-movements-legacy.html` 和 `/inventory-movements-legacy`。库存调整审核迁移后，`stock-adjustment-review.html` 和 `/stock-adjustment-review` 由 React 接管，旧实现保留在 `stock-adjustment-review-legacy.html` 和 `/stock-adjustment-review-legacy`。库存管理迁移后，`stock_summary.html` 和 `/stock_summary` 由 React 接管，旧实现保留在 `stock_summary-legacy.html` 和 `/stock_summary-legacy`。吉能原始出库导入迁移后，`stock_jn.html` 和 `/stock_jn` 由 React 接管，旧实现保留在 `stock_jn-legacy.html` 和 `/stock_jn-legacy`。长涛原始出库导入迁移后，`stock_ct.html` 和 `/stock_ct` 由 React 接管，旧实现保留在 `stock_ct-legacy.html` 和 `/stock_ct-legacy`。统一吉能/长涛原始出库导入迁移后，`stock_import.html` 和 `/stock_import` 由 React 接管，原实现的完整 Git blob 保留在 `stock_import-legacy.html` 和 `/stock_import-legacy`。门店全量同步导入迁移后，`store_import.html` 和 `/store_import` 由 React 接管，原实现的完整 Git blob 保留在 `store_import-legacy.html` 和 `/store_import-legacy`。因此当前构建共输出 25 个业务 HTML 入口。
 
 ## 2. 查询参数和浏览器存储
 
@@ -112,9 +118,9 @@
 
 只接受 `.xlsx`、`.xls`，读取首个工作表；员工白名单来自 `dealer_employee_mappings`。吉能固定列为 A/C/D/E/G/H/I/J/L，长涛为 A/C/D/F/G/Q/R/X/AA。写入 `raw_dealer_outbounds` 的字段为：
 
-`import_batch_id`、`is_processed=false`、`source_row_no`、`order_no`、`bill_date`、`customer_code`、`customer_name`、`barcode`、`product_name`、`package_reg`、`qty_piece`、`qty_scatter`、`is_triple_spec_direct`、`import_uid`。
+`import_batch_id`、`is_processed=false`、`source_row_no`、`order_no`、`bill_date`、`customer_code`、`customer_name`、`barcode`、`product_name`、`package_reg`、`qty_piece`、`qty_scatter`、`import_uid`。
 
-`import_uid` 由单号、日期、条码、整件数、散数生成；文件内先去重，再每 500 行按 `import_uid` upsert。当前页面明确承诺“只导入原始记录，不改变当前库存”；这是实际实现，优先于旧文档中的累加库存描述。
+`import_uid` 由单号、日期、条码、整件数、散数生成；文件内先去重，再每 500 行按 `import_uid` upsert。React 统一入口和 React 吉能/长涛独立入口都不再维护六个特殊条码名单，也不再给写入 payload 赋值 `is_triple_spec_direct`；数据库字段本身保持不变，三个 legacy 回退页继续完整保留旧名单和旧 payload。统一入口的两个导入器各自维护文件、拖放、按钮和状态，互不改写。当前页面明确承诺“只导入原始记录，不改变当前库存”；这是实际实现，优先于旧文档中的累加库存描述。
 
 ### 门店全量同步
 

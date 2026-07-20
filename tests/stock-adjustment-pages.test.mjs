@@ -13,18 +13,19 @@ const movementsReactPage = fs.readFileSync(new URL('../src/inventory-movements/I
 const styles = fs.readFileSync(new URL('../stock-adjustment.css', import.meta.url), 'utf8');
 const enhancements = fs.readFileSync(new URL('../stock-adjustment-admin-enhancements.css', import.meta.url), 'utf8');
 const stockSummary = fs.readFileSync(new URL('../stock_summary.html', import.meta.url), 'utf8');
+const stockSummaryPage = fs.readFileSync(new URL('../src/stock-summary/StockSummaryPage.tsx', import.meta.url), 'utf8');
 const dashboard = fs.readFileSync(new URL('../dashboard.html', import.meta.url), 'utf8');
 
 test('inventory management links to separate review and movement pages without zero-stock toggles', () => {
-  assert.match(stockSummary, /class="inventory-tools"/);
-  assert.match(stockSummary, /href="stock-adjustment-review"/);
-  assert.match(stockSummary, /href="inventory-movements"/);
-  assert.doesNotMatch(stockSummary, /<iframe/);
-  assert.doesNotMatch(stockSummary, /switchInventoryPanel/);
-  assert.doesNotMatch(stockSummary, /onlyNonZero/);
-  assert.doesNotMatch(stockSummary, /toggleNonZero/);
-  assert.doesNotMatch(stockSummary, /只看非零库存/);
-  assert.doesNotMatch(stockSummary, /显示零库存行/);
+  assert.match(stockSummaryPage, /className="inventory-tools"/);
+  assert.match(stockSummaryPage, /href="stock-adjustment-review"/);
+  assert.match(stockSummaryPage, /href="inventory-movements"/);
+  assert.doesNotMatch(stockSummaryPage, /<iframe/);
+  assert.doesNotMatch(stockSummaryPage, /switchInventoryPanel/);
+  assert.doesNotMatch(stockSummaryPage, /onlyNonZero/);
+  assert.doesNotMatch(stockSummaryPage, /toggleNonZero/);
+  assert.doesNotMatch(stockSummaryPage, /只看非零库存/);
+  assert.doesNotMatch(stockSummaryPage, /显示零库存行/);
 });
 
 test('review and movement pages return to inventory management', () => {

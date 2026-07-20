@@ -139,29 +139,37 @@ assert.ok(!dataRow.includes('saveRow'), 'data row should not keep per-row save a
 assert.ok(dataRow.indexOf('renderCustomerCodeInput') < dataRow.indexOf('data-field="is_active"'), 'data row active checkbox should be rightmost');
 
 const stockImport = readHtml('stock_import.html');
+const stockImportPage = readHtml('src/stock-import/StockImportPage.tsx');
+const dealerImportDomain = readHtml('src/domain/dealer-outbound-import.ts');
+const dealerImportRepository = readHtml('src/services/dealer-outbound-import-repository.ts');
 const storeImport = readHtml('store_import.html');
-for (const [name, html] of [['store_import.html', storeImport]]) {
-  assertIncludes(html, '--primary:#4A154B', `${name} should use the stock import primary color`);
-  assertIncludes(html, 'class="container"', `${name} should use the shared import container`);
-  assertIncludes(html, 'class="card"', `${name} should use the shared import card`);
-  assertIncludes(html, 'class="upload-box"', `${name} should use the shared upload box`);
-  assertIncludes(html, 'class="btn-submit"', `${name} should use the shared submit button`);
-  assert.ok(!html.includes('数据清洗'), `${name} should not mention data cleaning`);
-  assert.ok(!html.includes('差集'), `${name} should not mention set-difference import`);
-  assert.ok(!html.includes('覆盖'), `${name} should not mention overwrite behavior in visible copy`);
-}
-assertIncludes(stockImport, 'class="import-grid"', 'stock import should render both dealer import components side by side');
-assertIncludes(stockImport, "{key:'jn',title:'吉能'", 'stock import should include the JN import component');
-assertIncludes(stockImport, "{key:'ct',title:'长涛'", 'stock import should include the CT import component');
-assertIncludes(stockImport, 'A单号、C制单日期、D客户编号、E客户、G条形码、H商品名称、I包装、J件、L散', 'stock import should keep JN fixed import rules');
-assertIncludes(stockImport, 'A制单日期、C商品名称、D包装、F件、G散、Q客户编号、R客户名称、X单号、AA条形码', 'stock import should keep CT fixed import rules');
-assertIncludes(stockImport, "prefix:'JN'", 'stock import should keep JN import configuration');
-assertIncludes(stockImport, "prefix:'CT'", 'stock import should keep CT import configuration');
-assertIncludes(stockImport, "from('raw_dealer_outbounds').upsert", 'stock import should continue writing dealer outbound rows');
+const storeImportPage = readHtml('src/store-import/StoreImportPage.tsx');
+assertIncludes(storeImport, '--primary:#4A154B', 'store import should use the stock import primary color');
+assertIncludes(storeImportPage, 'className="container"', 'store import should use the shared import container');
+assertIncludes(storeImportPage, 'className="card"', 'store import should use the shared import card');
+assertIncludes(storeImportPage, "className={`upload-box", 'store import should use the shared upload box');
+assertIncludes(storeImportPage, 'className="btn-submit"', 'store import should use the shared submit button');
+assert.ok(!(storeImport + storeImportPage).includes('数据清洗'), 'store import should not mention data cleaning');
+assert.ok(!(storeImport + storeImportPage).includes('差集'), 'store import should not mention set-difference import');
+assert.ok(!(storeImport + storeImportPage).includes('覆盖'), 'store import should not mention overwrite behavior in visible copy');
+assertIncludes(storeImport, 'src="/src/store-import/main.tsx"', 'store import should mount its React TypeScript entry');
+assertIncludes(storeImportPage, '点击选择文件，或将门店 Excel 文件拖拽至此处', 'store import should keep the upload prompt');
+assertIncludes(storeImportPage, '>\n          导入\n        </button>', 'store import should keep the visible import button copy');
+assertIncludes(stockImport, 'src="/src/stock-import/main.tsx"', 'stock import should mount its React TypeScript entry');
+assertIncludes(stockImportPage, 'className="import-grid"', 'stock import should render both dealer import components side by side');
+assertIncludes(stockImportPage, "title: '吉能'", 'stock import should include the JN import component');
+assertIncludes(stockImportPage, "title: '长涛'", 'stock import should include the CT import component');
+assertIncludes(stockImportPage, 'A单号、C制单日期、D客户编号、E客户、G条形码、H商品名称、I包装、J件、L散', 'stock import should keep JN fixed import rules');
+assertIncludes(stockImportPage, 'A制单日期、C商品名称、D包装、F件、G散、Q客户编号、R客户名称、X单号、AA条形码', 'stock import should keep CT fixed import rules');
+assertIncludes(dealerImportDomain, "prefix: 'JN'", 'stock import should keep JN import configuration');
+assertIncludes(dealerImportDomain, "prefix: 'CT'", 'stock import should keep CT import configuration');
+assertIncludes(dealerImportRepository, "from('raw_dealer_outbounds')", 'stock import should continue writing dealer outbound rows');
 assert.ok(!storeImport.includes('fixed-map'), 'store import should not show stock fixed-column rules');
 
 assert.ok(existsSync(join(root, 'stock_summary.html')), 'stock_summary.html should exist');
-const stockSummary = readHtml('stock_summary.html');
+assert.ok(existsSync(join(root, 'stock_summary-legacy.html')), 'stock_summary-legacy.html should exist');
+const stockSummaryEntry = readHtml('stock_summary.html');
+const stockSummary = readHtml('stock_summary-legacy.html');
 assertIncludes(stockSummary, '<title>库存管理</title>', 'stock summary page title should be inventory management');
 assertIncludes(stockSummary, '<h1>库存管理</h1>', 'stock summary page heading should be inventory management');
 assertIncludes(stockSummary, 'onclick="exportEmployeeStocks()"', 'stock summary should expose export button');
@@ -189,3 +197,6 @@ assert.ok(!stockSummary.includes('copyArea'), 'stock summary should remove copy 
 assert.ok(!stockSummary.includes('<div class="label">库存品项</div>'), 'stock summary should not show large product item metric');
 assert.ok(!stockSummary.includes('<div class="label">总散数</div>'), 'stock summary should not show large total loose quantity metric');
 assert.ok(!stockSummary.includes('${esc(item.product.sub)}'), 'stock detail should not show brand/spec/flavor subtitle');
+assertIncludes(stockSummaryEntry, 'id="root"', 'stock summary primary entry should mount React');
+assertIncludes(stockSummaryEntry, 'src="/src/stock-summary/main.tsx"', 'stock summary primary entry should load the React module');
+assert.ok(!stockSummaryEntry.includes("client.rpc('import_van_stock_baseline'"), 'stock summary entry should not retain inline Supabase calls');

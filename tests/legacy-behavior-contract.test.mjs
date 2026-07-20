@@ -16,7 +16,7 @@ test('all legacy MPA entry files remain present in the contract', () => {
     'dashboard.html', 'employees.html', 'index.html', 'inventory-movements.html',
     'order.html', 'products.html', 'report.html', 'stock.html', 'stock_ct.html',
     'stock_import.html', 'stock_jn.html', 'stock_summary.html',
-    'stock-adjustment-review.html', 'store.html', 'store_import.html',
+    'stock-adjustment-review.html', 'store.html', 'store_import.html', 'store_import-legacy.html',
     'store_new.html', 'store_report.html', 'store_stock.html'
   ];
   entries.forEach(file => {
@@ -85,9 +85,9 @@ test('dashboard export headers, sheets and mix-box price conversion remain fixed
 });
 
 test('import order and payload contracts remain fixed', () => {
-  const stores = read('store_import.html');
-  const dealer = read('stock_import.html');
-  const baseline = read('stock_summary.html');
+  const stores = read('store_import-legacy.html');
+  const dealer = read('stock_import-legacy.html');
+  const baseline = read('stock_summary-legacy.html');
   const clearAt = stores.indexOf("from('temp_upload_assets').delete()");
   const insertAt = stores.indexOf('.insert(safePayloads)', clearAt);
   const syncAt = stores.indexOf("rpc('sync_and_mask_assets')", insertAt);
@@ -97,4 +97,42 @@ test('import order and payload contracts remain fixed', () => {
   assert.ok(dealer.includes('本次导入不会改变当前库存'));
   assert.ok(baseline.includes("client.rpc('import_van_stock_baseline'"));
   assert.ok(baseline.includes("INVENTORY_BASELINE_ID='2026-07-01-opening'"));
+});
+
+test('store import React migration keeps an exact legacy fallback contract', () => {
+  const reactEntry = read('store_import.html');
+  const legacyEntry = read('store_import-legacy.html');
+  const repository = read('src/services/store-import-repository.ts');
+  assert.match(reactEntry, /src="\/src\/store-import\/main\.tsx"/);
+  assert.ok(legacyEntry.includes("from('temp_upload_assets').delete().neq('employee_code', '_clear_all_')"));
+  assert.ok(repository.includes("rpc('sync_and_mask_assets')"));
+  assert.match(redirects, /\/store_import-legacy \/store_import-legacy\.html 200/);
+});
+
+test('unified stock import React migration keeps an exact legacy fallback contract', () => {
+  const reactEntry = read('stock_import.html');
+  const legacyEntry = read('stock_import-legacy.html');
+  assert.match(reactEntry, /src="\/src\/stock-import\/main\.tsx"/);
+  assert.ok(legacyEntry.includes("{key:'jn',title:'吉能'"));
+  assert.ok(legacyEntry.includes("{key:'ct',title:'长涛'"));
+  assert.ok(legacyEntry.includes('const SPECIAL={"6924513908032":1'));
+  assert.match(redirects, /\/stock_import-legacy \/stock_import-legacy\.html 200/);
+});
+
+test('stock JN React migration keeps an explicit legacy fallback contract', () => {
+  const reactEntry = read('stock_jn.html');
+  const legacyEntry = read('stock_jn-legacy.html');
+  assert.match(reactEntry, /src="\/src\/stock-jn\/main\.tsx"/);
+  assert.ok(legacyEntry.includes("const CFG={prefix:'JN'"));
+  assert.ok(legacyEntry.includes("const SPECIAL={\"6924513908032\":1"));
+  assert.match(redirects, /\/stock_jn-legacy \/stock_jn-legacy\.html 200/);
+});
+
+test('stock CT React migration keeps an explicit legacy fallback contract', () => {
+  const reactEntry = read('stock_ct.html');
+  const legacyEntry = read('stock_ct-legacy.html');
+  assert.match(reactEntry, /src="\/src\/stock-ct\/main\.tsx"/);
+  assert.ok(legacyEntry.includes("const CFG={prefix:'CT'"));
+  assert.ok(legacyEntry.includes("const SPECIAL={\"6924513908032\":1"));
+  assert.match(redirects, /\/stock_ct-legacy \/stock_ct-legacy\.html 200/);
 });

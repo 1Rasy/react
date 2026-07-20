@@ -5,7 +5,7 @@ import test from 'node:test';
 const read = file => fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 const storeApp = read('store-app.js');
 const order = read('order.html');
-const stockSummary = read('stock_summary.html');
+const stockSummary = read('src/domain/stock-summary.ts');
 const dashboard = read('dashboard.html');
 const deliveryNote = read('store-delivery-note.js');
 const afterSales = read('store-after-sales.js');
@@ -27,9 +27,9 @@ test('standalone order and stock pages display spec plus flavor and use barcode 
   assert.match(order, /product_name:productDisplayName\(\{spec,flavor,barcode:x\.barcode\},x\.barcode\)/);
   assert.doesNotMatch(order, /x\.flavor\|\|x\.name/);
   assert.doesNotMatch(order, /esc\(p\.name\)/);
-  assert.match(stockSummary, /title:productDisplayName\(p,barcode\)/);
-  assert.doesNotMatch(stockSummary, /title:p\.name\|\|barcode/);
-  assert.doesNotMatch(stockSummary, /barcode, name, brand/);
+  assert.match(stockSummary, /title: productDisplayName\(product, normalizedBarcode\)/);
+  assert.doesNotMatch(stockSummary, /title:\s*product\.name\s*\|\|/);
+  assert.doesNotMatch(stockSummary, /products\.name/);
 });
 
 test('exports, review pages and delivery notes do not fall back to saved product names', () => {

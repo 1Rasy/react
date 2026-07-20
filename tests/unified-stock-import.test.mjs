@@ -1,21 +1,41 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const dashboard = readFileSync(join(root, 'dashboard.html'), 'utf8');
-const stockImport = readFileSync(join(root, 'stock_import.html'), 'utf8');
+const read = file => readFileSync(join(root, file), 'utf8');
 
-assert.ok(dashboard.includes("location.href='stock_import'"), 'dashboard should link to the unified stock import page');
-assert.ok(!dashboard.includes("location.href='stock_jn'"), 'dashboard should remove the JN stock import button');
-assert.ok(!dashboard.includes("location.href='stock_ct'"), 'dashboard should remove the CT stock import button');
-assert.ok(stockImport.includes('class="import-grid"'), 'stock import should render the two importer components in one grid');
-assert.ok(stockImport.includes("title:'吉能'"), 'stock import should render the JN importer');
-assert.ok(stockImport.includes("title:'长涛'"), 'stock import should render the CT importer');
-assert.ok(stockImport.includes('>导入</button>'), 'stock import should use the concise import button label');
-assert.ok(stockImport.includes("prefix:'JN'"), 'stock import should keep the JN configuration');
-assert.ok(stockImport.includes("prefix:'CT'"), 'stock import should keep the CT configuration');
-assert.ok(stockImport.includes("from('raw_dealer_outbounds').upsert"), 'stock import should retain the outbound write flow');
+test('dashboard keeps the unified stock import navigation only', () => {
+  const dashboard = read('dashboard.html');
+  assert.ok(dashboard.includes("location.href='stock_import'"));
+  assert.ok(!dashboard.includes("location.href='stock_jn'"));
+  assert.ok(!dashboard.includes("location.href='stock_ct'"));
+});
 
-console.log('unified stock import checks ok');
+test('unified stock import entry mounts the React TypeScript page', () => {
+  const entry = read('stock_import.html');
+  assert.ok(entry.includes('id="root"'));
+  assert.ok(entry.includes('src="/src/stock-import/main.tsx"'));
+  assert.ok(!entry.includes('supabase.createClient'));
+  assert.ok(!entry.includes("from('raw_dealer_outbounds')"));
+});
+
+test('React page keeps the two importer cards and concise labels', () => {
+  const page = read('src/stock-import/StockImportPage.tsx');
+  assert.ok(page.includes('className="import-grid"'));
+  assert.ok(page.includes("title: '吉能'"));
+  assert.ok(page.includes("title: '长涛'"));
+  assert.ok(page.includes('经销商erp导入'));
+  assert.match(page, />\s*导入\s*<\/button>/);
+});
+
+test('shared domain and repository retain both importer prefixes and raw outbound writes', () => {
+  const domain = read('src/domain/dealer-outbound-import.ts');
+  const repository = read('src/services/dealer-outbound-import-repository.ts');
+  assert.ok(domain.includes("prefix: 'JN'"));
+  assert.ok(domain.includes("prefix: 'CT'"));
+  assert.ok(repository.includes("from('raw_dealer_outbounds')"));
+  assert.ok(repository.includes("upsert(part, { onConflict: 'import_uid' })"));
+});
