@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const store = readFileSync(join(root, 'store.html'), 'utf8');
 const storeApp = readFileSync(join(root, 'store-app.js'), 'utf8');
-const dashboard = readFileSync(join(root, 'dashboard.html'), 'utf8');
+const dashboard = readFileSync(join(root, 'src/domain/dashboard.ts'), 'utf8');
 
 for (const file of ['store_stock.html', 'store_report.html', 'store_new.html', 'store-style.css', 'store-app.js']) {
   assert.ok(existsSync(join(root, file)), `${file} should exist after splitting store.html`);
@@ -32,7 +32,7 @@ assert.ok(storeApp.includes('if(count>0)'), 'manual store deletion should check 
 assert.ok(storeApp.includes('先删除历史单据再删除门店'), 'manual store deletion should explain how to delete stores with history');
 assert.ok(!storeApp.includes('不会删除历史单据'), 'manual store deletion should not allow deleting store entry while history remains');
 
-assert.ok(dashboard.includes('const normalRows='), 'dashboard export should split regular store rows');
-assert.ok(dashboard.includes('offlineRows=rows.filter'), 'dashboard export should split manual store rows');
-assert.ok(dashboard.includes("String(r.atom||'').startsWith('NEW_')"), 'dashboard export should identify manual stores by NEW_ atom code');
-assert.ok(dashboard.includes('book_append_sheet(wb,offlineWs'), 'dashboard export should append offline store sheet');
+assert.ok(dashboard.includes('const normalRows ='), 'dashboard export should split regular store rows');
+assert.ok(dashboard.includes('const offlineRows ='), 'dashboard export should split manual store rows');
+assert.ok(dashboard.includes("String(row.atom || '').startsWith('NEW_')"), 'dashboard export should identify manual stores by NEW_ atom code');
+assert.ok(dashboard.includes("appendExportSheet(xlsx, workbook, offlineRows, '线外门店')"), 'dashboard export should append offline store sheet');

@@ -13,9 +13,11 @@
 | `store_new.html` | 线外门店 | `/store_new`（由托管平台 `cleanUrls` 提供） |
 | `store_report.html` | 员工卖进报表 | `/store_report`（同上） |
 | `store_stock.html` | 员工库存和调整申请 | `/store_stock`（同上） |
-| `dashboard.html` | 管理看板 | `/dashboard` |
+| `dashboard.html` | React 管理看板 | `/dashboard` |
+| `dashboard-legacy.html` | 管理看板旧版回退 | `/dashboard-legacy` |
 | `products.html` | 商品管理 | `/products` |
-| `employees.html` | 员工管理 | `/employees` |
+| `employees.html` | React 员工管理 | `/employees` |
+| `employees-legacy.html` | 员工管理旧版回退 | `/employees-legacy` |
 | `store_import.html` | React 门店全量同步导入 | `/store_import` |
 | `store_import-legacy.html` | 门店全量同步导入旧版回退 | `/store_import-legacy` |
 | `stock_import.html` | React 吉能/长涛原始出库导入 | `/stock_import` |
@@ -32,7 +34,7 @@
 | `stock.html` | 调整申请跳转兼容页 | `/stock`（由 `cleanUrls` 提供） |
 | `order.html`、`report.html` | 旧独立开单/报表兼容页 | `/order`、`/report`（由 `cleanUrls` 提供） |
 
-`_redirects` 对主要入口执行 `.html -> clean URL` 的 301，以及 `clean URL -> .html` 的 200 rewrite；`vercel.json` 保持 `cleanUrls:true`、`trailingSlash:false`。React MPA 必须继续输出所有业务 HTML 文件，不能用 SPA fallback 替代。库存流水迁移后，`inventory-movements.html` 和 `/inventory-movements` 由 React 接管，旧实现保留在 `inventory-movements-legacy.html` 和 `/inventory-movements-legacy`。库存调整审核迁移后，`stock-adjustment-review.html` 和 `/stock-adjustment-review` 由 React 接管，旧实现保留在 `stock-adjustment-review-legacy.html` 和 `/stock-adjustment-review-legacy`。库存管理迁移后，`stock_summary.html` 和 `/stock_summary` 由 React 接管，旧实现保留在 `stock_summary-legacy.html` 和 `/stock_summary-legacy`。吉能原始出库导入迁移后，`stock_jn.html` 和 `/stock_jn` 由 React 接管，旧实现保留在 `stock_jn-legacy.html` 和 `/stock_jn-legacy`。长涛原始出库导入迁移后，`stock_ct.html` 和 `/stock_ct` 由 React 接管，旧实现保留在 `stock_ct-legacy.html` 和 `/stock_ct-legacy`。统一吉能/长涛原始出库导入迁移后，`stock_import.html` 和 `/stock_import` 由 React 接管，原实现的完整 Git blob 保留在 `stock_import-legacy.html` 和 `/stock_import-legacy`。门店全量同步导入迁移后，`store_import.html` 和 `/store_import` 由 React 接管，原实现的完整 Git blob 保留在 `store_import-legacy.html` 和 `/store_import-legacy`。因此当前构建共输出 25 个业务 HTML 入口。
+`_redirects` 对主要入口执行 `.html -> clean URL` 的 301，以及 `clean URL -> .html` 的 200 rewrite；`vercel.json` 保持 `cleanUrls:true`、`trailingSlash:false`。React MPA 必须继续输出所有业务 HTML 文件，不能用 SPA fallback 替代。管理看板迁移后，`dashboard.html` 和 `/dashboard` 由 React 接管，原实现的完整 Git blob 保留在 `dashboard-legacy.html` 和 `/dashboard-legacy`。员工管理迁移后，`employees.html` 和 `/employees` 由 React 接管，原实现的完整 Git blob 保留在 `employees-legacy.html` 和 `/employees-legacy`。库存流水迁移后，`inventory-movements.html` 和 `/inventory-movements` 由 React 接管，旧实现保留在 `inventory-movements-legacy.html` 和 `/inventory-movements-legacy`。库存调整审核迁移后，`stock-adjustment-review.html` 和 `/stock-adjustment-review` 由 React 接管，旧实现保留在 `stock-adjustment-review-legacy.html` 和 `/stock-adjustment-review-legacy`。库存管理迁移后，`stock_summary.html` 和 `/stock_summary` 由 React 接管，旧实现保留在 `stock_summary-legacy.html` 和 `/stock_summary-legacy`。吉能原始出库导入迁移后，`stock_jn.html` 和 `/stock_jn` 由 React 接管，旧实现保留在 `stock_jn-legacy.html` 和 `/stock_jn-legacy`。长涛原始出库导入迁移后，`stock_ct.html` 和 `/stock_ct` 由 React 接管，旧实现保留在 `stock_ct-legacy.html` 和 `/stock_ct-legacy`。统一吉能/长涛原始出库导入迁移后，`stock_import.html` 和 `/stock_import` 由 React 接管，原实现的完整 Git blob 保留在 `stock_import-legacy.html` 和 `/stock_import-legacy`。门店全量同步导入迁移后，`store_import.html` 和 `/store_import` 由 React 接管，原实现的完整 Git blob 保留在 `store_import-legacy.html` 和 `/store_import-legacy`。因此当前构建共输出 27 个业务 HTML 入口。
 
 ## 2. 查询参数和浏览器存储
 

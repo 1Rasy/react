@@ -7,13 +7,13 @@ const root = join(import.meta.dirname, '..');
 const read = file => readFileSync(join(root, file), 'utf8');
 const store = read('store-app.js');
 const afterSales = read('store-after-sales.js');
-const dashboard = read('dashboard.html');
+const dashboard = read('src/domain/dashboard.ts');
 const redirects = read('_redirects');
 
 test('all legacy MPA entry files remain present in the contract', () => {
   const contract = read('docs/migration/LEGACY_BEHAVIOR_CONTRACT.md');
   const entries = [
-    'dashboard.html', 'employees.html', 'index.html', 'inventory-movements.html',
+    'dashboard.html', 'employees.html', 'employees-legacy.html', 'index.html', 'inventory-movements.html',
     'order.html', 'products.html', 'report.html', 'stock.html', 'stock_ct.html',
     'stock_import.html', 'stock_jn.html', 'stock_summary.html',
     'stock-adjustment-review.html', 'store.html', 'store_import.html', 'store_import-legacy.html',
@@ -77,11 +77,13 @@ test('after-sales stays outside revenue and inside stock delta', () => {
 });
 
 test('dashboard export headers, sheets and mix-box price conversion remain fixed', () => {
-  assert.ok(dashboard.includes("['开单日期','员工','员工号','门店编号','门店','规格口味','条码','整数','整价','散数','散价','金额']"));
-  assert.ok(dashboard.includes("book_append_sheet(wb,ws,'开单明细')"));
-  assert.ok(dashboard.includes("book_append_sheet(wb,offlineWs,'线外门店')"));
-  assert.ok(dashboard.includes('row.loosePrice=Number((salePrice/mixSize).toFixed(2))'));
-  assert.ok(dashboard.includes("XLSX.writeFile(wb,getExportFileName(),{cellStyles:true})"));
+  assert.ok(dashboard.includes('DASHBOARD_EXPORT_HEADERS'));
+  for (const header of ['开单日期', '员工', '员工号', '门店编号', '门店', '规格口味', '条码', '整数', '整价', '散数', '散价', '金额']) {
+    assert.ok(dashboard.includes(`'${header}'`));
+  }
+  assert.ok(dashboard.includes("appendExportSheet(xlsx, workbook, normalRows, '开单明细')"));
+  assert.ok(dashboard.includes("appendExportSheet(xlsx, workbook, offlineRows, '线外门店')"));
+  assert.ok(dashboard.includes('row.loosePrice = Number((salePrice / mixSize).toFixed(2))'));
 });
 
 test('import order and payload contracts remain fixed', () => {

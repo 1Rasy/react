@@ -14,7 +14,10 @@ const styles = fs.readFileSync(new URL('../stock-adjustment.css', import.meta.ur
 const enhancements = fs.readFileSync(new URL('../stock-adjustment-admin-enhancements.css', import.meta.url), 'utf8');
 const stockSummary = fs.readFileSync(new URL('../stock_summary.html', import.meta.url), 'utf8');
 const stockSummaryPage = fs.readFileSync(new URL('../src/stock-summary/StockSummaryPage.tsx', import.meta.url), 'utf8');
-const dashboard = fs.readFileSync(new URL('../dashboard.html', import.meta.url), 'utf8');
+const dashboardEntry = fs.readFileSync(new URL('../dashboard.html', import.meta.url), 'utf8');
+const dashboardPage = fs.readFileSync(new URL('../src/dashboard/DashboardPage.tsx', import.meta.url), 'utf8');
+const dashboardController = fs.readFileSync(new URL('../src/dashboard/DashboardController.ts', import.meta.url), 'utf8');
+const dashboardRepository = fs.readFileSync(new URL('../src/services/dashboard-repository.ts', import.meta.url), 'utf8');
 
 test('inventory management links to separate review and movement pages without zero-stock toggles', () => {
   assert.match(stockSummaryPage, /className="inventory-tools"/);
@@ -53,25 +56,20 @@ test('inventory movement primary entry is React and the classic page remains ava
 });
 
 test('dashboard inventory management shows the pending review count as a notification badge', () => {
-  assert.match(dashboard, /id="inventoryManagementCard"/);
-  assert.match(dashboard, /id="pendingStockAdjustmentBadge"/);
-  assert.match(dashboard, /get_pending_stock_adjustment_requests/);
-  assert.match(dashboard, /function loadPendingStockAdjustmentBadge\(/);
-  assert.match(dashboard, /notification-badge/);
+  assert.match(dashboardPage, /id="inventoryManagementCard"/);
+  assert.match(dashboardPage, /id="pendingStockAdjustmentBadge"/);
+  assert.match(dashboardRepository, /get_pending_stock_adjustment_requests/);
+  assert.match(dashboardController, /loadPendingStockAdjustmentCount/);
+  assert.match(dashboardEntry, /notification-badge/);
 });
 
 test('dashboard export sends the selected date range to one backend query before creating Excel', () => {
-  assert.match(dashboard, /async function loadDashboardExportRows\(\)/);
-  assert.match(dashboard, /client\.rpc\('get_dashboard_export_order_items'/);
-  assert.match(dashboard, /p_start_at:start\?start\.toISOString\(\):null/);
-  assert.match(dashboard, /p_end_at:end\?end\.toISOString\(\):null/);
-  assert.match(dashboard, /sourceRows=await loadDashboardExportRows\(\)/);
-  const exportStart = dashboard.indexOf('async function exportOrderExcel()');
-  const exportEnd = dashboard.indexOf('async function loadDashboard()', exportStart);
-  const exportBody = dashboard.slice(exportStart, exportEnd);
-  assert.doesNotMatch(exportBody, /getFilteredOrders\(\)/);
-  assert.doesNotMatch(dashboard, /loadOrdersForExport/);
-  assert.doesNotMatch(dashboard, /loadOrderItemsForExport/);
+  assert.match(dashboardRepository, /client\.rpc\('get_dashboard_export_order_items'/);
+  assert.match(dashboardRepository, /p_start_at: dateRange\.start \? dateRange\.start\.toISOString\(\) : null/);
+  assert.match(dashboardRepository, /p_end_at: dateRange\.end \? dateRange\.end\.toISOString\(\) : null/);
+  assert.match(dashboardController, /sourceRows = await repository\.loadDashboardExportRows/);
+  assert.doesNotMatch(dashboardController, /filterDashboardOrders/);
+  assert.doesNotMatch(dashboardRepository, /loadOrdersForExport|loadOrderItemsForExport/);
 });
 
 test('admin review page uses an explicitly injected API client', () => {

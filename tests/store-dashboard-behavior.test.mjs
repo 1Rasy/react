@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const storeApp = readFileSync(join(root, 'store-app.js'), 'utf8');
-const dashboard = readFileSync(join(root, 'dashboard.html'), 'utf8');
+const dashboard = readFileSync(join(root, 'dashboard-legacy.html'), 'utf8');
 const storeStyle = readFileSync(join(root, 'store-style.css'), 'utf8');
 
 assert.ok(storeApp.includes("p.set('emp',currentEmployee.code)"), 'split store URLs should keep employee code');

@@ -15,7 +15,7 @@ function assertIncludes(content, expected, message) {
 
 assert.ok(existsSync(join(root, 'dashboard.html')), 'dashboard.html should exist');
 
-const dashboard = readHtml('dashboard.html');
+const dashboard = readHtml('dashboard-legacy.html');
 const store = readHtml('store.html') + '\n' + readHtml('store-style.css') + '\n' + readHtml('store-app.js') + '\n' + readHtml('store-delivery-note.js');
 
 assertIncludes(store, 'html2canvas@1.4.1', 'store should load html2canvas for delivery note image generation');
@@ -100,14 +100,16 @@ assert.ok(!dashboard.includes('<div class="hint">元 / 单</div>'), 'dashboard a
 assert.ok(!dashboard.includes('<div class="sub">${esc(row.employee_code)}</div>'), 'employee ranking should not show employee code subtitle');
 assert.ok(!dashboard.includes('<div class="sub">${esc(order.employee_code || \'\')}</div>'), 'recent orders should not show employee code subtitle');
 
-const employees = readHtml('employees.html');
-assert.ok(!employees.includes('sortModeBtn'), 'employees page should not have a sort button');
-assert.ok(!employees.includes('toggleSortMode'), 'employees page should not implement sorting');
-assertIncludes(employees, ".from('dealer_employee_mappings')", 'employees page should load dealer employee mappings');
-assertIncludes(employees, 'customer_code', 'employees page should read mapping customer_code');
-assertIncludes(employees, 'saveMappingForEmployee', 'employees page should save mapping customer codes');
-assertIncludes(employees, 'renderCustomerCodeInput', 'employees page should render editable customer codes');
-assertIncludes(employees, '经销商客户编号', 'employees page should label customer_code as dealer customer code');
+const employeesEntry = readHtml('employees.html');
+const employees = readHtml('employees-legacy.html');
+const employeesPage = readHtml('src/employees/EmployeesPage.tsx');
+const employeesRepository = readHtml('src/services/employees-repository.ts');
+assertIncludes(employeesEntry, 'src="/src/employees/main.tsx"', 'employees should mount its React TypeScript entry');
+assert.ok(!employeesPage.includes('sortModeBtn'), 'employees page should not have a sort button');
+assert.ok(!employeesPage.includes('toggleSortMode'), 'employees page should not implement sorting');
+assertIncludes(employeesRepository, ".from('dealer_employee_mappings')", 'employees repository should load dealer employee mappings');
+assertIncludes(employeesPage, 'customer_code', 'employees page should read mapping customer_code');
+assertIncludes(employeesPage, '经销商客户编号', 'employees page should label customer_code as dealer customer code');
 
 const headerMatch = employees.match(/<thead>[\s\S]*?<tr>([\s\S]*?)<\/tr>/);
 assert.ok(headerMatch, 'employees table should have a header row');
@@ -137,6 +139,11 @@ assert.ok(dataRow.indexOf("renderInput(e,'employee_code')") < dataRow.indexOf("r
 assert.ok(dataRow.indexOf("renderInput(e,'name')") < dataRow.indexOf('renderCustomerCodeInput'), 'data row dealer customer code should be after name');
 assert.ok(!dataRow.includes('saveRow'), 'data row should not keep per-row save actions');
 assert.ok(dataRow.indexOf('renderCustomerCodeInput') < dataRow.indexOf('data-field="is_active"'), 'data row active checkbox should be rightmost');
+
+assertIncludes(employeesPage, 'field="employee_code"', 'React data row should start with employee code');
+assertIncludes(employeesPage, 'field="name"', 'React data row should include employee name');
+assertIncludes(employeesPage, 'field="customer_code"', 'React data row should include dealer customer code');
+assertIncludes(employeesPage, 'data-field="is_active"', 'React data row should end with active checkbox');
 
 const stockImport = readHtml('stock_import.html');
 const stockImportPage = readHtml('src/stock-import/StockImportPage.tsx');

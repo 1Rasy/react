@@ -1,8 +1,10 @@
 /index.html / 301
 /store.html /store 301
 /dashboard.html /dashboard 301
+/dashboard-legacy.html /dashboard-legacy 301
 /products.html /products 301
 /employees.html /employees 301
+/employees-legacy.html /employees-legacy 301
 /store_import.html /store_import 301
 /store_import-legacy.html /store_import-legacy 301
 /stock_import.html /stock_import 301
@@ -21,8 +23,10 @@
 /index /index.html 200
 /store /store.html 200
 /dashboard /dashboard.html 200
+/dashboard-legacy /dashboard-legacy.html 200
 /products /products.html 200
 /employees /employees.html 200
+/employees-legacy /employees-legacy.html 200
 /store_import /store_import.html 200
 /store_import-legacy /store_import-legacy.html 200
 /stock_import /stock_import.html 200
@@ -37,4 +41,3 @@
 /stock-adjustment-review-legacy /stock-adjustment-review-legacy.html 200
 /inventory-movements /inventory-movements.html 200
 /inventory-movements-legacy /inventory-movements-legacy.html 200
-

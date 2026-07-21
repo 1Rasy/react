@@ -30,15 +30,15 @@ assert.ok(productsPage.includes('filterBtn_allow_mix_box'), 'products page shoul
 assert.ok(productsPage.includes('data-field="allow_mix_box"'), 'products page should render row checkbox for allow_mix_box');
 assert.ok(mixBoxSql.includes('add column if not exists allow_mix_box boolean not null default false'), 'allow_mix_box migration should add the product flag safely');
 
-const dashboardPage = readFileSync(join(root, 'dashboard.html'), 'utf8');
+const dashboardPage = readFileSync(join(root, 'src/domain/dashboard.ts'), 'utf8');
 assert.ok(deliveryNote.includes("saleUnit.includes('拼盒')"), 'delivery note should recognize mixed-box sale units');
 assert.ok(deliveryNote.includes('row.wholeQty+=saleQty/wholeSize'), 'delivery note should convert mixed loose quantities to whole boxes');
 assert.ok(dashboardPage.includes('pcs_per_box'), 'dashboard export should load box size for mixed boxes');
-assert.ok(dashboardPage.includes("saleUnit==='拼盒'"), 'dashboard should detect mixed-box sale rows');
-assert.ok(dashboardPage.includes('row.looseQty+=saleQty'), 'dashboard mixed-box export should keep each flavor as loose quantity');
-assert.ok(dashboardPage.includes('row.loosePrice=Number((salePrice/mixSize).toFixed(2))'), 'dashboard mixed-box loose price should be whole box price divided by middle-box size to two decimals');
-assert.ok(dashboardPage.includes('barcode:bc'), 'dashboard mixed-box export should keep each product barcode');
-assert.ok(!dashboardPage.includes('r.wholeQty+=saleQty/mixSize'), 'dashboard mixed boxes should no longer be aggregated as whole boxes');
+assert.ok(dashboardPage.includes("saleUnit === '拼盒'"), 'dashboard should detect mixed-box sale rows');
+assert.ok(dashboardPage.includes('row.looseQty += saleQty'), 'dashboard mixed-box export should keep each flavor as loose quantity');
+assert.ok(dashboardPage.includes('row.loosePrice = Number((salePrice / mixSize).toFixed(2))'), 'dashboard mixed-box loose price should be whole box price divided by middle-box size to two decimals');
+assert.ok(dashboardPage.includes('barcode,'), 'dashboard mixed-box export should keep each product barcode');
+assert.ok(!dashboardPage.includes('row.wholeQty += saleQty / mixSize'), 'dashboard mixed boxes should no longer be aggregated as whole boxes');
 
 assert.ok(storeApp.includes('class="mix-box-count"'), 'mix-box count should render outside the button');
 assert.ok(storeApp.includes('>点击拼盒</button>'), 'mix-box button should say click mix box only');

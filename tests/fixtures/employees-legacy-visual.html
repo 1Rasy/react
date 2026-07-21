@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>员工管理 Legacy Mock 视觉验证</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+</head>
+<body>
+  <script type="module">
+    const employees = [
+      { id: 1, employee_code: 'E2', name: '李四', is_active: false, created_at: '2026-07-01T00:00:00Z' },
+      { id: 2, employee_code: 'E10', name: '张三', is_active: true, created_at: '2026-07-02T00:00:00Z' },
+      { id: 3, employee_code: 'S260401018', name: '王五', is_active: true, created_at: '2026-07-03T00:00:00Z' },
+      { id: 4, employee_code: 'S260401020', name: '赵六', is_active: true, created_at: '2026-07-04T00:00:00Z' }
+    ];
+    const mappings = [
+      { id: 1, customer_code: 'C002', customer_name: '二号门店', employee_code: 'E2' },
+      { id: 2, customer_code: 'C010', customer_name: '十号门店', employee_code: 'E10' },
+      { id: 3, customer_code: 'C018', customer_name: '十八号门店', employee_code: 'S260401018' }
+    ];
+    const legacyHtml = await fetch('/employees-legacy.html').then(response => response.text());
+    const parsed = new DOMParser().parseFromString(legacyHtml, 'text/html');
+    const style = document.createElement('style');
+    style.textContent = parsed.querySelector('style')?.textContent || '';
+    document.head.append(style);
+    const card = parsed.querySelector('.card');
+    if (!card) throw new Error('Legacy 员工页面卡片不存在');
+    document.body.append(card);
+
+    window.__consoleErrors = [];
+    const nativeConsoleError = console.error.bind(console);
+    console.error = (...args) => {
+      window.__consoleErrors.push(args.map(value => String(value)).join(' '));
+      nativeConsoleError(...args);
+    };
+    window.supabase = {
+      createClient() {
+        return {
+          from(table) {
+            return {
+              select() { return this; },
+              order() {
+                return Promise.resolve({
+                  data: table === 'employees' ? employees : mappings,
+                  error: null
+                });
+              }
+            };
+          }
+        };
+      }
+    };
+    const inlineSource = Array.from(parsed.querySelectorAll('script'))
+      .map(script => script.textContent || '')
+      .find(source => source.includes('function normalizeCustomerCode'));
+    if (!inlineSource) throw new Error('Legacy 员工页面脚本不存在');
+    const script = document.createElement('script');
+    script.textContent = inlineSource;
+    document.body.append(script);
+  </script>
+</body>
+</html>

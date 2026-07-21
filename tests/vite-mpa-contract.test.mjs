@@ -14,7 +14,11 @@ test('Vite MPA includes every legacy HTML entry without attaching React to it', 
     .filter(value => /^[\w-]+\.html$/.test(value))
     .filter((value, index, all) => all.indexOf(value) === index);
 
-  legacyEntries.forEach(file => assert.ok(pages.includes(`file: '${file}'`), `${file} is missing from MPA inputs`));
+  legacyEntries.forEach(file => assert.match(
+    pages,
+    new RegExp(`file: ['\"]${file.replace('.', '\\.')}['\"]`),
+    `${file} is missing from MPA inputs`
+  ));
   assert.ok(vite.includes("'react-shell.html'"));
   assert.doesNotMatch(read('store.html'), /src\/migration\/main\.tsx/);
   assert.doesNotMatch(read('dashboard.html'), /src\/migration\/main\.tsx/);
@@ -34,6 +38,33 @@ test('Vite build copies unchanged classic scripts for the legacy fallback', () =
   assert.ok(vite.includes("file.endsWith('.js')"));
   assert.ok(vite.includes("'_redirects'"));
   assert.ok(vite.includes("fileName: file"));
+});
+
+test('dashboard clean and html URLs use React with an exact legacy fallback', () => {
+  const redirects = read('_redirects');
+  const pages = read('src/migration/legacy-pages.ts');
+  assert.match(redirects, /\/dashboard\.html \/dashboard 301/);
+  assert.match(redirects, /\/dashboard \/dashboard\.html 200/);
+  assert.match(redirects, /\/dashboard-legacy\.html \/dashboard-legacy 301/);
+  assert.match(redirects, /\/dashboard-legacy \/dashboard-legacy\.html 200/);
+  assert.ok(pages.includes("file: 'dashboard-legacy.html'"));
+  assert.match(read('dashboard.html'), /src="\/src\/dashboard\/main\.tsx"/);
+  assert.match(read('dashboard-legacy.html'), /get_dashboard_export_order_items/);
+});
+
+test('employees clean and html URLs use React with an exact legacy fallback', () => {
+  const redirects = read('_redirects');
+  const pages = read('src/migration/legacy-pages.ts');
+  const reactEntry = read('employees.html');
+  const legacyEntry = read('employees-legacy.html');
+
+  assert.match(redirects, /\/employees\.html \/employees 301/);
+  assert.match(redirects, /\/employees \/employees\.html 200/);
+  assert.match(redirects, /\/employees-legacy\.html \/employees-legacy 301/);
+  assert.match(redirects, /\/employees-legacy \/employees-legacy\.html 200/);
+  assert.match(pages, /file: ["']employees-legacy\.html["']/);
+  assert.match(reactEntry, /src="\/src\/employees\/main\.tsx"/);
+  assert.match(legacyEntry, /async function saveMappingForEmployee/);
 });
 
 test('inventory movement clean and html URLs use React with an explicit legacy fallback', () => {
@@ -122,7 +153,7 @@ test('unified stock import clean and html URLs use React with an explicit legacy
   assert.match(redirects, /\/stock_import-legacy\.html \/stock_import-legacy 301/);
   assert.match(redirects, /\/stock_import-legacy \/stock_import-legacy\.html 200/);
   assert.ok(pages.includes("file: 'stock_import-legacy.html'"));
-  assert.equal((pages.match(/file: '/g) || []).length, 25);
+  assert.equal((pages.match(/file: ["']/g) || []).length, 27);
   assert.match(reactEntry, /src="\/src\/stock-import\/main\.tsx"/);
   assert.match(legacyEntry, /from\('raw_dealer_outbounds'\)\.upsert\(part,\{onConflict:'import_uid'\}\)/);
 });
@@ -138,7 +169,7 @@ test('store import clean and html URLs use React with an explicit legacy fallbac
   assert.match(redirects, /\/store_import-legacy\.html \/store_import-legacy 301/);
   assert.match(redirects, /\/store_import-legacy \/store_import-legacy\.html 200/);
   assert.ok(pages.includes("file: 'store_import-legacy.html'"));
-  assert.equal((pages.match(/file: '/g) || []).length, 25);
+  assert.equal((pages.match(/file: ["']/g) || []).length, 27);
   assert.match(reactEntry, /src="\/src\/store-import\/main\.tsx"/);
   assert.match(legacyEntry, /rpc\('sync_and_mask_assets'\)/);
 });

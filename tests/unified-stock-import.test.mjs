@@ -8,10 +8,10 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const read = file => readFileSync(join(root, file), 'utf8');
 
 test('dashboard keeps the unified stock import navigation only', () => {
-  const dashboard = read('dashboard.html');
-  assert.ok(dashboard.includes("location.href='stock_import'"));
-  assert.ok(!dashboard.includes("location.href='stock_jn'"));
-  assert.ok(!dashboard.includes("location.href='stock_ct'"));
+  const dashboard = read('src/dashboard/DashboardPage.tsx');
+  assert.ok(dashboard.includes("navigate('stock_import')"));
+  assert.ok(!dashboard.includes("navigate('stock_jn')"));
+  assert.ok(!dashboard.includes("navigate('stock_ct')"));
 });
 
 test('unified stock import entry mounts the React TypeScript page', () => {
